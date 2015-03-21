@@ -318,14 +318,7 @@ public class pipelineTest {
 		public long totalBytes() {
 			return bytes;
 		}
-		
 
-		@Override
-		public void startup() {
-			RingBuffer.initLowLevelReader(inputRing);
-			super.startup();
-		}
-		
 		//TODO: build a standard java blocking Queue example as a point of comparison.
 		//      Must know if event consumer is faster or slower.
 		
@@ -373,6 +366,7 @@ public class pipelineTest {
 						
 						inputRing.workingTailPos.value = nextTargetHead;
 						inputRing.byteWorkingTailPos.value += len;
+						
 						releaseReadLock(inputRing);
 			            	
 			        	count++;

@@ -17,6 +17,12 @@ public class InputStageEventConsumerExample extends PronghornStage {
 		consumer = new EventConsumer(output);
 	}
 			
+	//TODO: add new compiled version of this.  At compile time the annotations are processed and 
+	//      this source will be modified into a highLevel API usage using code generation.
+	//TODO: Must have normal Java BlockingQueue example as a benchmark
+	//TODO: after graph is built and before scheduling, we may also run the code generation.
+	//TODO: AAA, For reader in ALL APIs must also supply clear of previous read. 
+	
 	@Override
 	public void run() {
 				
