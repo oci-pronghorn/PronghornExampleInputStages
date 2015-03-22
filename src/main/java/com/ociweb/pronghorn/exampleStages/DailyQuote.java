@@ -18,13 +18,13 @@ public interface DailyQuote {
 	@ProngTemplateField(fieldId=118, decimalPlaces=2)
 	void writeOpenPrice(double price);
 	
-	@ProngTemplateField(fieldId=118, decimalPlaces=2)
+	@ProngTemplateField(fieldId=134, decimalPlaces=2)
 	void writeHighPrice(double price);
 	
-	@ProngTemplateField(fieldId=118, decimalPlaces=2)
+	@ProngTemplateField(fieldId=150, decimalPlaces=2)
 	void writeLowPrice(double price);
 	
-	@ProngTemplateField(fieldId=118, decimalPlaces=2)
+	@ProngTemplateField(fieldId=166, decimalPlaces=2)
 	void writeClosedPrice(double price);
 	
 	@ProngTemplateField(fieldId=178)

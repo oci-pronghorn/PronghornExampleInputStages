@@ -9,8 +9,14 @@ public class InputStageEventConsumerExample extends PronghornStage {
 
 	private final EventConsumer consumer;
 		
-	public final String testSymbol = "IBM";
-	public final String testCompanyName = "International Business Machines";
+	public static final String testSymbol = "IBM";
+	public static final String testCompanyName = "International Business Machines";
+	public static final double testOpen = 23.43;
+	public static final double testClose = 72.3;
+	public static final double testHigh = 80;
+	public static final double testLow = 20.001;
+    public static final long   testVolume = 10000000;	
+	
 	
 	protected InputStageEventConsumerExample(GraphManager graphManager, RingBuffer output) {
 		super(graphManager, NONE, output);		
@@ -28,20 +34,23 @@ public class InputStageEventConsumerExample extends PronghornStage {
 				
 		DailyQuote dq = EventConsumer.create(consumer, DailyQuote.class);
 		if (null != dq) {
-			
-			dq.writeEmptyField(null);
-			
-			dq.writeOpenPrice(23.43);
-			dq.writeClosedPrice(72.3);
-			dq.writeHighPrice(80);
-			dq.writeLowPrice(20.001);
-			dq.writeVolume(10000000);
-			
-			dq.writeSymbol(testSymbol);
-			dq.writeCompanyName(testCompanyName);
-			
+			populateFields(dq);
 			EventConsumer.publish(consumer, dq);
 		}
+		
+	}
+
+	private void populateFields(DailyQuote dq) {
+		dq.writeEmptyField(null);
+		
+		dq.writeOpenPrice(testOpen);
+		dq.writeClosedPrice(testClose);
+		dq.writeHighPrice(testHigh);
+		dq.writeLowPrice(testLow);
+		dq.writeVolume(testVolume);
+		
+		dq.writeSymbol(testSymbol);
+		dq.writeCompanyName(testCompanyName);
 	}
 
 }

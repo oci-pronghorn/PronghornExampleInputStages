@@ -7,6 +7,7 @@ import static com.ociweb.pronghorn.ring.RingWriter.*;
 
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;
+import com.ociweb.pronghorn.ring.RingWriter;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 
@@ -29,8 +30,8 @@ public class InputStageHighLevelExample extends PronghornStage {
 	
 	private final int dailyMessageIdx;
 		
-	public final String testSymbol = "IBM";
-	public final String testCompanyName = "International Business Machines";
+	public static final String testSymbol = "IBM";
+	public static final String testCompanyName = "International Business Machines";
 	
 	protected InputStageHighLevelExample(GraphManager graphManager, RingBuffer output) {
 		super(graphManager, NONE, output);
@@ -72,8 +73,9 @@ public class InputStageHighLevelExample extends PronghornStage {
 			
 			//optional feature that batches call to publishWrites, in some cases this
 			//can improve throughput by reducing contention with the reader of this queue.			
-			//RingWriter.setPublishBatchSize(output, 4);
-		
+		//	RingWriter.setPublishBatchSize(output, 16);
+			
+			
 		    ///////
 			//PUT YOUR LOGIC HERE FOR CONNTECTING TO THE DATABASE OR OTHER SOURCE OF INFORMATION
 			//////
@@ -109,7 +111,7 @@ public class InputStageHighLevelExample extends PronghornStage {
 			// in order to build unit tests we must write every field here
 			//If fields are not written however keep in mind that they will be filled with garbage.
 			
-			writeASCII(output, FIELD_EMPTY, (char[])null, 0, -1);
+			writeUTF8(output, FIELD_EMPTY, (char[])null, 0, -1);
 			
 			writeLong(output, FIELD_VOLUME, 10000000l);			
 			

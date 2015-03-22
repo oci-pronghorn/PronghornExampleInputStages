@@ -86,11 +86,11 @@ public class InputStageLowLevelExample extends PronghornStage {
 		
 		try{
 			//setup the output ring for low level writing			
-			initLowLevelWriter(output);
+			initLowLevelWriter(output); //TODO: AA, working to remove this.
 			
 			//optional feature that batches call to publishWrites, in some cases this
 			//can improve throughput by reducing contention with the reader of this queue.			
-			//RingBuffer.setPublishBatchSize(output, 4);
+			//RingBuffer.setPublishBatchSize(output, 16);
 		
 		    ///////
 			//PUT YOUR LOGIC HERE FOR CONNTECTING TO THE DATABASE OR OTHER SOURCE OF INFORMATION
@@ -101,8 +101,6 @@ public class InputStageLowLevelExample extends PronghornStage {
 		} catch (Throwable t) {
 			throw new RuntimeException(t);
 		}
-		//call the super.starup() last to keep schedulers from getting too eager and starting early
-		super.startup();
 	}
 	
 	
