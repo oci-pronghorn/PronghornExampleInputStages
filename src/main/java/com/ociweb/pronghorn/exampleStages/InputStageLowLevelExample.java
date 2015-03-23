@@ -83,7 +83,7 @@ public class InputStageLowLevelExample extends PronghornStage {
 	
 	@Override
 	public void startup() {
-		
+		super.startup();
 		try{
 			//setup the output ring for low level writing			
 			initLowLevelWriter(output); //TODO: AA, working to remove this.

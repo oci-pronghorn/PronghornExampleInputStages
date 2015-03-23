@@ -149,15 +149,22 @@ public class baselineTest {
 	public void baselineTest() {
 		//LinkedBlockingQueue
 		//final BlockingQueue<DailyQuote> queue = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);		
-		final BlockingQueue<DailyQuote> queue = new LinkedBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
-		final BlockingQueue<DailyQuote> queue11 = new LinkedBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
-		final BlockingQueue<DailyQuote> queue12 = new LinkedBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
-		final BlockingQueue<DailyQuote> queue121 = new LinkedBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
-		final BlockingQueue<DailyQuote> queue122 = new LinkedBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
+		final BlockingQueue<DailyQuote> queue = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
+		
+		final BlockingQueue<DailyQuote> queue1 = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
+		final BlockingQueue<DailyQuote> queue11 = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
+		final BlockingQueue<DailyQuote> queue12 = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
+		
+		final BlockingQueue<DailyQuote> queue2 = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
+		final BlockingQueue<DailyQuote> queue21 = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
+		final BlockingQueue<DailyQuote> queue22 = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
 		
 		final AtomicBoolean isLiving = new AtomicBoolean(true);
-		final AtomicLong messages1 = new AtomicLong();
-		final AtomicLong messages2 = new AtomicLong();
+		final AtomicLong messages11 = new AtomicLong();
+		final AtomicLong messages12 = new AtomicLong();
+		final AtomicLong messages21 = new AtomicLong();
+		final AtomicLong messages22 = new AtomicLong();
+		
 		
 		final DailyQuote expected = new DailyQuoteNode();
 		expected.writeSymbol(InputStageEventConsumerExample.testSymbol);
@@ -174,6 +181,7 @@ public class baselineTest {
 			
 			@Override
 			public void run() {
+
 				while (isLiving.get()) {
 					
 					DailyQuote newInstance = new DailyQuoteNode();
@@ -204,10 +212,10 @@ public class baselineTest {
 					while (!queue.isEmpty() && isLiving.get()) {
 						DailyQuote item = queue.remove();
 						
-							while (!queue11.offer(item) && isLiving.get()){
+							while (!queue1.offer(item) && isLiving.get()){
 								Thread.yield();
 							};
-							while (!queue12.offer(item) && isLiving.get()) {
+							while (!queue2.offer(item) && isLiving.get()) {
 								Thread.yield();
 							};	
 						
@@ -216,8 +224,34 @@ public class baselineTest {
 	//			System.out.println("exit splitter");
 			}			
 		};
+
+		Runnable router11 = new Runnable() {
+
+			@Override
+			public void run() {
+				int count = 0;
+				while (isLiving.get()) {
+					
+					while (!queue1.isEmpty() && isLiving.get()) {
+						DailyQuote item = queue1.remove();
+						
+						   //half one way and half the other
+						   if (0==(1&count++)) {						   
+							   while (!queue11.offer(item) && isLiving.get()){
+								   Thread.yield();
+							   }
+						   } else {
+							   while (!queue12.offer(item) && isLiving.get()) {
+								   Thread.yield();
+							   }							   
+						   }	
+					}					
+				}
+	//			System.out.println("exit router");
+			}			
+		};
 		
-		Runnable dumper1 = new Runnable() {
+		Runnable dumper11 = new Runnable() {
 			int count;
 			
 			@Override
@@ -232,29 +266,49 @@ public class baselineTest {
 						count++;
 					}					
 				}				
-				messages1.set(count);
-//				System.out.println("exit dumper1");
+				messages11.set(count);
+	//			System.out.println("exit dumper11");
+			}			
+		};
+		
+		Runnable dumper12 = new Runnable() {
+			int count;
+			
+			@Override
+			public void run() {
+				while (isLiving.get()) {
+					
+					while (!queue12.isEmpty() && isLiving.get()) {
+						DailyQuote item = queue12.remove();
+						if (!item.equals(expected)) {
+							fail("Objects no not match");
+						}
+						count++;
+					}					
+				}				
+				messages12.set(count);
+	//			System.out.println("exit dumper12");
 			}			
 		};
 		
 		
-		Runnable router = new Runnable() {
+		Runnable router12 = new Runnable() {
 
 			@Override
 			public void run() {
 				int count = 0;
 				while (isLiving.get()) {
 					
-					while (!queue12.isEmpty() && isLiving.get()) {
-						DailyQuote item = queue12.remove();
+					while (!queue2.isEmpty() && isLiving.get()) {
+						DailyQuote item = queue2.remove();
 						
 						   //half one way and half the other
 						   if (0==(1&count++)) {						   
-							   while (!queue121.offer(item) && isLiving.get()){
+							   while (!queue21.offer(item) && isLiving.get()){
 								   Thread.yield();
 							   }
 						   } else {
-							   while (!queue122.offer(item) && isLiving.get()) {
+							   while (!queue22.offer(item) && isLiving.get()) {
 								   Thread.yield();
 							   }							   
 						   }	
@@ -271,15 +325,15 @@ public class baselineTest {
 			public void run() {
 				while (isLiving.get()) {
 					
-					while (!queue121.isEmpty() && isLiving.get()) {
-						DailyQuote item = queue121.remove();
+					while (!queue21.isEmpty() && isLiving.get()) {
+						DailyQuote item = queue21.remove();
 						if (!item.equals(expected)) {
 							fail("Objects no not match");
 						}
 						count++;
 					}					
 				}				
-				messages2.set(count);
+				messages21.set(count);
 	//			System.out.println("exit dumper21");
 			}			
 		};
@@ -291,27 +345,31 @@ public class baselineTest {
 			public void run() {
 				while (isLiving.get()) {
 					
-					while (!queue122.isEmpty() && isLiving.get()) {
-						DailyQuote item = queue122.remove();
+					while (!queue22.isEmpty() && isLiving.get()) {
+						DailyQuote item = queue22.remove();
 						if (!item.equals(expected)) {
 							fail("Objects no not match");
 						}
 						count++;
 					}					
 				}				
-				messages2.set(count);
+				messages22.set(count);
 	//			System.out.println("exit dumper22");
 			}			
 		};
 		
-		ExecutorService executor = Executors.newFixedThreadPool(6);
+		ExecutorService executor = Executors.newFixedThreadPool(8);
 		
 		
 	    long startTime = System.currentTimeMillis();
 	    executor.execute(generator);
 	    executor.execute(splitter);
-	    executor.execute(dumper1);	    
-	    executor.execute(router);
+	    
+	    executor.execute(router11);
+	    executor.execute(dumper11);
+	    executor.execute(dumper12);	    
+	    
+	    executor.execute(router12);
 	    executor.execute(dumper21);
 	    executor.execute(dumper22);
 	    
@@ -332,8 +390,12 @@ public class baselineTest {
 		long duration = System.currentTimeMillis()-startTime;
 		if (0!=duration) {
 			
-			System.out.println("TotalMessages:"+messages1 + 
-					           " Msg/Ms:"+(messages1.get()/(float)duration) 	+ "         Baseline with BlockingQueue "+Math.abs(messages1.get()-messages2.get())				           
+			long totalMessages1 = messages11.get()+messages12.get();
+			long totalMessages2 = messages21.get()+messages22.get();			
+			
+			
+			System.out.println("TotalMessages:"+totalMessages1 + 
+					           " Msg/Ms:"+(totalMessages1/(float)duration) 	+ "         Baseline with BlockingQueue "+totalMessages1+" vs "+totalMessages2				           
 							  );
 			System.gc();
 		}

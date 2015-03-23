@@ -23,7 +23,7 @@ import com.ociweb.pronghorn.stage.scheduling.ThreadPerStageScheduler;
 public class PipelineTest {
 
 	static final long TIMEOUT_SECONDS = 3;
-	static final long TEST_LENGTH_IN_SECONDS = 11;
+	static final long TEST_LENGTH_IN_SECONDS = 7;
 	
 	private static FieldReferenceOffsetManager from;
 	public static final int messagesOnRing = 64;
@@ -55,9 +55,11 @@ public class PipelineTest {
 	
 		RingBuffer ringBuffer = new RingBuffer(ringBufferConfig);
 		RingBuffer ringBuffer21 = new RingBuffer(ringBufferConfig.grow2x());
+		RingBuffer ringBuffer211 = new RingBuffer(ringBufferConfig);
+		RingBuffer ringBuffer212 = new RingBuffer(ringBufferConfig);
 		RingBuffer ringBuffer22 = new RingBuffer(ringBufferConfig.grow2x());
-		RingBuffer ringBuffer221 = new RingBuffer(ringBufferConfig.grow2x().grow2x());
-		RingBuffer ringBuffer222 = new RingBuffer(ringBufferConfig.grow2x().grow2x());
+		RingBuffer ringBuffer221 = new RingBuffer(ringBufferConfig);
+		RingBuffer ringBuffer222 = new RingBuffer(ringBufferConfig);
 		
 		//Just to confirm that we are starting at zero before running the test.
 		assertEquals(0, RingBuffer.headPosition(ringBuffer));
@@ -82,20 +84,18 @@ public class PipelineTest {
 		//simple stage that reports to the console
 	   
 		SplitterStage stage = new SplitterStage(gm,ringBuffer, ringBuffer21, ringBuffer22);	
-		//ConsoleStage console = new ConsoleStage(gm, ringBuffer21); //this stage can be used to watch the test
-		CheckVarLengthValuesStage dumpStage1 = new CheckVarLengthValuesStage(gm, ringBuffer21, expectedMsg, expected, expectedInts);	
 		
-		RoundRobinRouteStage router = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222);
-		//new SplitterStage(gm, ringBuffer22, ringBuffer221, ringBuffer222);
-		
+		RoundRobinRouteStage router21 = new RoundRobinRouteStage(gm, ringBuffer21, ringBuffer211, ringBuffer212);
+		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, ringBuffer211, expectedMsg, expected, expectedInts);
+		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, ringBuffer212, expectedMsg, expected, expectedInts);
+					
+		RoundRobinRouteStage router22 = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222);
 		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, expectedMsg, expected, expectedInts);
 		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, expectedMsg, expected, expectedInts);
 		
-		//Use this line if you wan to skip the split but  you must comment out the above lines starting with the splitterStage
-//		CheckVarLengthValuesStage dumpStage1 = new CheckVarLengthValuesStage(gm, ringBuffer,  0, expected, expectedInts);	
-		
-		long totalMessages = timeAndRunTest(ringBuffer, gm, expected, " low level", dumpStage1);
-		
+		long totalMessages = timeAndRunTest(ringBuffer, gm, expected, " low level", dumpStage21, dumpStage22);
+		long expectedMessages = dumpStage11.messageCount() + dumpStage12.messageCount();
+		assertEquals(expectedMessages,totalMessages);
 		
 	}
 	
@@ -105,9 +105,11 @@ public class PipelineTest {
 	
 		RingBuffer ringBuffer = new RingBuffer(ringBufferConfig);
 		RingBuffer ringBuffer21 = new RingBuffer(ringBufferConfig.grow2x());
+		RingBuffer ringBuffer211 = new RingBuffer(ringBufferConfig);
+		RingBuffer ringBuffer212 = new RingBuffer(ringBufferConfig);
 		RingBuffer ringBuffer22 = new RingBuffer(ringBufferConfig.grow2x());
-		RingBuffer ringBuffer221 = new RingBuffer(ringBufferConfig.grow2x().grow2x());
-		RingBuffer ringBuffer222 = new RingBuffer(ringBufferConfig.grow2x().grow2x());
+		RingBuffer ringBuffer221 = new RingBuffer(ringBufferConfig);
+		RingBuffer ringBuffer222 = new RingBuffer(ringBufferConfig);
 		
 		//Just to confirm that we are starting at zero before running the test.
 		assertEquals(0, RingBuffer.headPosition(ringBuffer));
@@ -129,19 +131,19 @@ public class PipelineTest {
    	    //simple stage that reports to the console
 	   
 		SplitterStage stage = new SplitterStage(gm,ringBuffer, ringBuffer21, ringBuffer22);	
-		//ConsoleStage console = new ConsoleStage(gm, ringBuffer21); //this stage can be used to watch the test
-		CheckVarLengthValuesStage dumpStage1 = new CheckVarLengthValuesStage(gm, ringBuffer21, expectedMsg, expected, expectedInts);
-		
-		RoundRobinRouteStage router = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222);
-		//new SplitterStage(gm, ringBuffer22, ringBuffer221, ringBuffer222);
-		
+
+		RoundRobinRouteStage router21 = new RoundRobinRouteStage(gm, ringBuffer21, ringBuffer211, ringBuffer212);
+		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, ringBuffer211, expectedMsg, expected, expectedInts);
+		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, ringBuffer212, expectedMsg, expected, expectedInts);
+					
+		RoundRobinRouteStage router22 = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222);
 		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, expectedMsg, expected, expectedInts);
 		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, expectedMsg, expected, expectedInts);
+
 		
-		//Use this line if you wan to skip the split but  you must comment out the above lines starting with the splitterStage
-//		CheckVarLengthValuesStage dumpStage1 = new CheckVarLengthValuesStage(gm, ringBuffer, expectedMsg, expected, expectedInts);	
-		
-	    long totalMessages = timeAndRunTest(ringBuffer, gm, expected, " HighLevel", dumpStage1);
+	    long totalMessages = timeAndRunTest(ringBuffer, gm, expected, " HighLevel", dumpStage21, dumpStage22);   
+	    long expectedMessages = dumpStage11.messageCount() + dumpStage12.messageCount();
+	    assertEquals(expectedMessages,totalMessages);
 		
 	}
 
@@ -153,9 +155,11 @@ public class PipelineTest {
 	
 		RingBuffer ringBuffer = new RingBuffer(ringBufferConfig);
 		RingBuffer ringBuffer21 = new RingBuffer(ringBufferConfig.grow2x());
+		RingBuffer ringBuffer211 = new RingBuffer(ringBufferConfig);
+		RingBuffer ringBuffer212 = new RingBuffer(ringBufferConfig);
 		RingBuffer ringBuffer22 = new RingBuffer(ringBufferConfig.grow2x());
-		RingBuffer ringBuffer221 = new RingBuffer(ringBufferConfig.grow2x().grow2x());
-		RingBuffer ringBuffer222 = new RingBuffer(ringBufferConfig.grow2x().grow2x());
+		RingBuffer ringBuffer221 = new RingBuffer(ringBufferConfig);
+		RingBuffer ringBuffer222 = new RingBuffer(ringBufferConfig);
 		
 		//Just to confirm that we are starting at zero before running the test.
 		assertEquals(0, RingBuffer.headPosition(ringBuffer));
@@ -177,23 +181,19 @@ public class PipelineTest {
 		final int[] expectedInts = new int[] {8, 0, 3, 3, 31, 0, 0, 2, 0, 2343, 2, 0, 8000, 2, 0, 2000, 2, 0, 7230, 0, 10000000, 34};
    	    //simple stage that reports to the console
 	   
-		SplitterStage stage = new SplitterStage(gm,ringBuffer, ringBuffer21, ringBuffer22);	
-		//ConsoleStage console = new ConsoleStage(gm, ringBuffer21); //this stage can be used to watch the test
-		CheckVarLengthValuesStage dumpStage1 = new CheckVarLengthValuesStage(gm, ringBuffer21, expectedMsg, expected, expectedInts);
+		SplitterStage stage = new SplitterStage(gm,ringBuffer, ringBuffer21, ringBuffer22);
 		
-		RoundRobinRouteStage router = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222);
-		//new SplitterStage(gm, ringBuffer22, ringBuffer221, ringBuffer222);
-		
+		RoundRobinRouteStage router21 = new RoundRobinRouteStage(gm, ringBuffer21, ringBuffer211, ringBuffer212);
+		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, ringBuffer211, expectedMsg, expected, expectedInts);
+		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, ringBuffer212, expectedMsg, expected, expectedInts);
+					
+		RoundRobinRouteStage router22 = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222);
 		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, expectedMsg, expected, expectedInts);
 		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, expectedMsg, expected, expectedInts);
 		
-		
-		//Use this line if you wan to skip the split but  you must comment out the above lines starting with the splitterStage
-//		CheckVarLengthValuesStage dumpStage1 = new CheckVarLengthValuesStage(gm, ringBuffer, expectedMsg, expected, null);	
-		
-		long totalMessages = timeAndRunTest(ringBuffer, gm, expected, " EventConsumer", dumpStage1);
-	   
-		
+		long totalMessages = timeAndRunTest(ringBuffer, gm, expected, " EventConsumer", dumpStage21, dumpStage22);   
+	    long expectedMessages = dumpStage11.messageCount() + dumpStage12.messageCount();
+	    assertEquals(expectedMessages,totalMessages);
 	}
 	
 

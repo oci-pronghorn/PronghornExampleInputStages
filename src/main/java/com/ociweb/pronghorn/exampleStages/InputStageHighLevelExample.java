@@ -73,7 +73,7 @@ public class InputStageHighLevelExample extends PronghornStage {
 			
 			//optional feature that batches call to publishWrites, in some cases this
 			//can improve throughput by reducing contention with the reader of this queue.			
-		//	RingWriter.setPublishBatchSize(output, 16);
+			//RingWriter.setPublishBatchSize(output, 16);
 			
 			
 		    ///////
