@@ -17,6 +17,13 @@ public class InputStageLowLevelExample extends PronghornStage {
 	private final FieldReferenceOffsetManager FROM; //Acronym so this is in all caps (this holds the schema)
 	
 	
+	private int fragToWrite;
+	private String serverURI = "tcp://localhost:1883";
+	private String clientId = "thingFortytwo";
+	private int    clientIdIndex = 42;	
+	private String topic = "root/colors/blue";
+	private byte[] payload = new byte[]{0,1,2,3,4,5,6,7};
+	
 	/**
 	 * This is an example of a input stage that uses the low level API.  This is the most difficult to use API for 
 	 * the ring buffer but it is generally the fastest and in some corner case becomes the simplest.
@@ -54,6 +61,8 @@ public class InputStageLowLevelExample extends PronghornStage {
 		//all the script positions for every message is found in this array
 		//the length of this array should match the count of templates
 		this.msgIdx = FROM.messageStarts[0]; //for this demo we are just using the first message template
+		
+		this.fragToWrite  = msgIdx;
 		
 		validateSchemaSupported(FROM);
 		
@@ -125,14 +134,10 @@ public class InputStageLowLevelExample extends PronghornStage {
 			
 			//////
 			//gather all the data to be written
+			//nothing to do for this example because we are using constants
+			//declaring the constant values here would cause GC and slow down the data feeding into the test
 			/////
-			
-			int fragToWrite  = msgIdx;
-			String serverURI = "tcp://localhost:1883";
-			String clientId = "thingFortytwo";
-			int    clientIdIndex = 42;	
-			String topic = "root/colors/blue";
-			byte[] payload = new byte[]{0,1,2,3,4,5,6,7};
+
 			
 			//when using the low level API 
 			//     **  Messages must start with addMsgIdx (fragments do not need to start with anything)

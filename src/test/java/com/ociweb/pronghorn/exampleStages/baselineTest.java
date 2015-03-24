@@ -182,17 +182,18 @@ public class baselineTest {
 			@Override
 			public void run() {
 
-				while (isLiving.get()) {
-					
-					DailyQuote newInstance = new DailyQuoteNode();
-					
-					newInstance.writeSymbol(InputStageEventConsumerExample.testSymbol);
-					newInstance.writeCompanyName(InputStageEventConsumerExample.testCompanyName);
-					newInstance.writeHighPrice(InputStageEventConsumerExample.testHigh);
-					newInstance.writeLowPrice(InputStageEventConsumerExample.testLow);
-					newInstance.writeOpenPrice(InputStageEventConsumerExample.testOpen);
-					newInstance.writeClosedPrice(InputStageEventConsumerExample.testClose);
-					newInstance.writeVolume(InputStageEventConsumerExample.testVolume);								
+				//To make the test same as the other tests object creation is done outside the loop.
+				DailyQuote newInstance = new DailyQuoteNode();
+				
+				newInstance.writeSymbol(InputStageEventConsumerExample.testSymbol);
+				newInstance.writeCompanyName(InputStageEventConsumerExample.testCompanyName);
+				newInstance.writeHighPrice(InputStageEventConsumerExample.testHigh);
+				newInstance.writeLowPrice(InputStageEventConsumerExample.testLow);
+				newInstance.writeOpenPrice(InputStageEventConsumerExample.testOpen);
+				newInstance.writeClosedPrice(InputStageEventConsumerExample.testClose);
+				newInstance.writeVolume(InputStageEventConsumerExample.testVolume);								
+
+				while (isLiving.get()) {				
 
 					while (!queue.offer(newInstance) && isLiving.get()){
 						Thread.yield();
