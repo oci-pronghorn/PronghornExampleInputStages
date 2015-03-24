@@ -26,10 +26,12 @@ import com.ociweb.pronghorn.stage.scheduling.ThreadPerStageScheduler;
 public class PipelineTest {
 
 	static final long TIMEOUT_SECONDS = 3;
-	static final long TEST_LENGTH_IN_SECONDS = 20;
+	static final long TEST_LENGTH_IN_SECONDS = 7;
 	
 	private static FieldReferenceOffsetManager from;
-	public static final int messagesOnRing = 100000;
+	public static final int messagesOnRing = 200;
+	public static final int monitorMessagesOnRing = 7;
+	
 	private static final int maxLengthVarField = 40;
 	
 	private final Integer monitorRate = Integer.valueOf(50000000);
@@ -48,7 +50,7 @@ public class PipelineTest {
 		try {
 			from = TemplateHandler.loadFrom("/exampleTemplate.xml");
 			ringBufferConfig = new RingBufferConfig(from, messagesOnRing, maxLengthVarField);
-			ringBufferMonitorConfig = new RingBufferConfig(MonitorFROM.buildFROM(), messagesOnRing, maxLengthVarField);
+			ringBufferMonitorConfig = new RingBufferConfig(MonitorFROM.buildFROM(), monitorMessagesOnRing, maxLengthVarField);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -85,41 +87,9 @@ public class PipelineTest {
 		
    	    GraphManager gm = new GraphManager();
    	    
-   	    //TODO: once this works must extract as a simplified abstraction!
-   	    
-		RingBuffer monBuffer = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer21 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer211 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer212 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer22 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer221 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer222 = new RingBuffer(ringBufferMonitorConfig);
-   	    		
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer,    monBuffer));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer21,  monBuffer21));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer211, monBuffer211));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer212, monBuffer212));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer22,  monBuffer22));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer221, monBuffer221));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer222, monBuffer222));		
-		
-		//TODO: in graph should give dot notation based on location.
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new MonitorConsoleStage(gm, monBuffer, monBuffer21, monBuffer211, monBuffer212, monBuffer22, monBuffer221, monBuffer222));
+   	    //TODO: each stage can get a NAME.
 		
    	    
-		RingBuffer.setPublishBatchSize(ringBuffer, 500);
-		
-		RingBuffer.setPublishBatchSize(ringBuffer211, 500);
-		RingBuffer.setReleaseBatchSize(ringBuffer211, 500);
-		
-		RingBuffer.setPublishBatchSize(ringBuffer212, 500);
-		RingBuffer.setReleaseBatchSize(ringBuffer212, 500);
-   	    
-		RingBuffer.setPublishBatchSize(ringBuffer221, 500);
-		RingBuffer.setReleaseBatchSize(ringBuffer221, 500);
-		
-		RingBuffer.setPublishBatchSize(ringBuffer222, 500);
-		RingBuffer.setReleaseBatchSize(ringBuffer222, 500);
 		
 		InputStageLowLevelExample  iso = new InputStageLowLevelExample(gm, ringBuffer); //full queue
 		
@@ -134,6 +104,12 @@ public class PipelineTest {
 		RoundRobinRouteStage router22 = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222); //mostly empty
 		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, expectedMsg, expected, expectedInts);
 		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, expectedMsg, expected, expectedInts);
+		
+		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new MonitorConsoleStage(gm, GraphManager.attachMonitorsToGraph(gm, monitorRate, ringBufferMonitorConfig)));
+		
+		//Enable batching
+		GraphManager.enableBatching(gm);
+				
 		
 		long totalMessages = timeAndRunTest(ringBuffer22, gm, expected, " low level", dumpStage21, dumpStage22);
 		long expectedMessages = dumpStage11.messageCount() + dumpStage12.messageCount();
@@ -160,17 +136,9 @@ public class PipelineTest {
 		
    	    GraphManager gm = new GraphManager();
    	    
-   	    //TODO: once this works must extract as a simplified abstraction!
-   	    
-//		RingBuffer monBuffer = new RingBuffer(ringBufferMonitorConfig);   	    		
-//		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer,  monBuffer));	
-//		
-//		//TODO: in graph should give dot notation based on location.
-//		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new MonitorConsoleStage(gm, monBuffer));
-		
-   	    
-		RingBuffer.setPublishBatchSize(ringBuffer, 500);
-		RingBuffer.setReleaseBatchSize(ringBuffer, 500);
+   		//Enable batching
+		GraphManager.enableBatching(gm);
+			
 		
 		InputStageLowLevelExample  iso = new InputStageLowLevelExample(gm, ringBuffer); //full queue
 		
@@ -200,46 +168,22 @@ public class PipelineTest {
 		
 		
    	    GraphManager gm = new GraphManager();
-   	    
-        
-
-	    //TODO: once this works must extract as a simplified abstraction!
-   	    //TODO: add this to the graph as a single method.  How do we choose the monitor console? Should it take a graph? as an argument?
-	    
-		RingBuffer monBuffer = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer21 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer211 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer212 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer22 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer221 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer222 = new RingBuffer(ringBufferMonitorConfig);
-	    		
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer,    monBuffer));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer21,  monBuffer21));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer211, monBuffer211));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer212, monBuffer212));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer22,  monBuffer22));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer221, monBuffer221));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer222, monBuffer222));		
+   	            
 		
-		//TODO: in graph should give dot notation based on location.
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new MonitorConsoleStage(gm, monBuffer, monBuffer21, monBuffer211, monBuffer212, monBuffer22, monBuffer221, monBuffer222));
-		
-		
-		///TODO: add method to graph, add optimized batch size.
-		RingBuffer.setPublishBatchSize(ringBuffer, 500);
-		
-		RingBuffer.setPublishBatchSize(ringBuffer211, 500);
-		RingBuffer.setReleaseBatchSize(ringBuffer211, 500);
-		
-		RingBuffer.setPublishBatchSize(ringBuffer212, 500);
-		RingBuffer.setReleaseBatchSize(ringBuffer212, 500);
-   	    
-		RingBuffer.setPublishBatchSize(ringBuffer221, 500);
-		RingBuffer.setReleaseBatchSize(ringBuffer221, 500);
-		
-		RingBuffer.setPublishBatchSize(ringBuffer222, 500);
-		RingBuffer.setReleaseBatchSize(ringBuffer222, 500);
+//		///TODO: add method to graph, add optimized batch size.
+//		RingBuffer.setPublishBatchSize(ringBuffer, 500);
+//		
+//		RingBuffer.setPublishBatchSize(ringBuffer211, 500);
+//		RingBuffer.setReleaseBatchSize(ringBuffer211, 500);
+//		
+//		RingBuffer.setPublishBatchSize(ringBuffer212, 500);
+//		RingBuffer.setReleaseBatchSize(ringBuffer212, 500);
+//   	    
+//		RingBuffer.setPublishBatchSize(ringBuffer221, 500);
+//		RingBuffer.setReleaseBatchSize(ringBuffer221, 500);
+//		
+//		RingBuffer.setPublishBatchSize(ringBuffer222, 500);
+//		RingBuffer.setReleaseBatchSize(ringBuffer222, 500);
 		
    	    InputStageHighLevelExample  iso = new InputStageHighLevelExample(gm, ringBuffer);
 		
@@ -260,6 +204,12 @@ public class PipelineTest {
 		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, expectedMsg, expected, expectedInts);
 		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, expectedMsg, expected, expectedInts);
 
+		//Turn on monitoring
+		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new MonitorConsoleStage(gm, GraphManager.attachMonitorsToGraph(gm, monitorRate, ringBufferMonitorConfig)));	
+		
+		//Enable batching
+		GraphManager.enableBatching(gm);
+		
 		
 	    long totalMessages = timeAndRunTest(ringBuffer22, gm, expected, " HighLevel", dumpStage21, dumpStage22);   
 	    long expectedMessages = dumpStage11.messageCount() + dumpStage12.messageCount();
@@ -290,49 +240,13 @@ public class PipelineTest {
 		
    	    GraphManager gm = new GraphManager();
    	    
-
-	    //TODO: once this works must extract as a simplified abstraction!
-	    
-		RingBuffer monBuffer = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer21 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer211 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer212 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer22 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer221 = new RingBuffer(ringBufferMonitorConfig);
-		RingBuffer monBuffer222 = new RingBuffer(ringBufferMonitorConfig);
-	    		
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer,    monBuffer));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer21,  monBuffer21));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer211, monBuffer211));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer212, monBuffer212));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer22,  monBuffer22));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer221, monBuffer221));
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new RingBufferMonitorStage(gm, ringBuffer222, monBuffer222));		
-		
-		//TODO: in graph should give dot notation based on location.
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new MonitorConsoleStage(gm, monBuffer, monBuffer21, monBuffer211, monBuffer212, monBuffer22, monBuffer221, monBuffer222));
-		
-		RingBuffer.setPublishBatchSize(ringBuffer, 500);
-		
-		RingBuffer.setPublishBatchSize(ringBuffer211, 500);
-		RingBuffer.setReleaseBatchSize(ringBuffer211, 500);
-		
-		RingBuffer.setPublishBatchSize(ringBuffer212, 500);
-		RingBuffer.setReleaseBatchSize(ringBuffer212, 500);
-   	    
-		RingBuffer.setPublishBatchSize(ringBuffer221, 500);
-		RingBuffer.setReleaseBatchSize(ringBuffer221, 500);
-		
-		RingBuffer.setPublishBatchSize(ringBuffer222, 500);
-		RingBuffer.setReleaseBatchSize(ringBuffer222, 500);
-		
+				
         InputStageEventConsumerExample  iso = new InputStageEventConsumerExample(gm, ringBuffer);
 		
    	    //	build the expected data that should be found on the byte ring.
    	    final byte[] expected = (iso.testSymbol+iso.testCompanyName).getBytes();
    	    int expectedMsg = from.messageStarts[1];
    	    
-   	    //TODO: AA, must find out why this does not match for the eventConsumer.
 		final int[] expectedInts = new int[] {8, 0, 3, 3, 31, 0, 0, 2, 0, 2343, 2, 0, 8000, 2, 0, 2000, 2, 0, 7230, 0, 10000000, 34};
    	    //simple stage that reports to the console
 	   
@@ -345,6 +259,11 @@ public class PipelineTest {
 		RoundRobinRouteStage router22 = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222);
 		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, expectedMsg, expected, expectedInts);
 		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, expectedMsg, expected, expectedInts);
+		
+		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new MonitorConsoleStage(gm, GraphManager.attachMonitorsToGraph(gm, monitorRate, ringBufferMonitorConfig)));
+		
+		//Enable batching
+		GraphManager.enableBatching(gm);
 		
 		long totalMessages = timeAndRunTest(ringBuffer22, gm, expected, " EventConsumer", dumpStage21, dumpStage22);   
 	    long expectedMessages = dumpStage11.messageCount() + dumpStage12.messageCount();

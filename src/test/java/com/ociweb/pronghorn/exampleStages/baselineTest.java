@@ -145,6 +145,8 @@ public class baselineTest {
 		}
 	}
 
+	//TOOD: need to build Java8 baseline exmple and Java7 handoff
+	
 	@Test
 	public void baselineTest() {
 		//LinkedBlockingQueue
@@ -200,7 +202,6 @@ public class baselineTest {
 					};
 	
 				}	
-	//			System.out.println("exit generator");
 			}			
 		};
 		
@@ -222,7 +223,6 @@ public class baselineTest {
 						
 					}					
 				}
-	//			System.out.println("exit splitter");
 			}			
 		};
 
@@ -248,7 +248,6 @@ public class baselineTest {
 						   }	
 					}					
 				}
-	//			System.out.println("exit router");
 			}			
 		};
 		
@@ -268,7 +267,6 @@ public class baselineTest {
 					}					
 				}				
 				messages11.set(count);
-	//			System.out.println("exit dumper11");
 			}			
 		};
 		
@@ -288,7 +286,6 @@ public class baselineTest {
 					}					
 				}				
 				messages12.set(count);
-	//			System.out.println("exit dumper12");
 			}			
 		};
 		
@@ -315,7 +312,6 @@ public class baselineTest {
 						   }	
 					}					
 				}
-	//			System.out.println("exit router");
 			}			
 		};
 		
@@ -335,7 +331,6 @@ public class baselineTest {
 					}					
 				}				
 				messages21.set(count);
-	//			System.out.println("exit dumper21");
 			}			
 		};
 		
@@ -355,7 +350,6 @@ public class baselineTest {
 					}					
 				}				
 				messages22.set(count);
-	//			System.out.println("exit dumper22");
 			}			
 		};
 		
@@ -381,7 +375,6 @@ public class baselineTest {
 		isLiving.set(false);
 		executor.shutdown();
 		try {
-			//System.out.println("await shutdown");
 			boolean ok = executor.awaitTermination(PipelineTest.TIMEOUT_SECONDS, TimeUnit.SECONDS);
 			assertTrue(ok);
 		} catch (InterruptedException e) {
