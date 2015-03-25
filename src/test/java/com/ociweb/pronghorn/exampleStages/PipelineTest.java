@@ -168,22 +168,6 @@ public class PipelineTest {
 		
 		
    	    GraphManager gm = new GraphManager();
-   	            
-		
-//		///TODO: add method to graph, add optimized batch size.
-//		RingBuffer.setPublishBatchSize(ringBuffer, 500);
-//		
-//		RingBuffer.setPublishBatchSize(ringBuffer211, 500);
-//		RingBuffer.setReleaseBatchSize(ringBuffer211, 500);
-//		
-//		RingBuffer.setPublishBatchSize(ringBuffer212, 500);
-//		RingBuffer.setReleaseBatchSize(ringBuffer212, 500);
-//   	    
-//		RingBuffer.setPublishBatchSize(ringBuffer221, 500);
-//		RingBuffer.setReleaseBatchSize(ringBuffer221, 500);
-//		
-//		RingBuffer.setPublishBatchSize(ringBuffer222, 500);
-//		RingBuffer.setReleaseBatchSize(ringBuffer222, 500);
 		
    	    InputStageHighLevelExample  iso = new InputStageHighLevelExample(gm, ringBuffer);
 		
@@ -343,9 +327,7 @@ public class PipelineTest {
 			this.from = RingBuffer.from(inputRing);
 			this.fragSize = from.fragDataSize[expectedMessageIdx];
 			
-			
-			//RingBuffer.setReleaseBatchSize(inputRing, 1024);
-			
+						
 		}
 
 		public long messageCount() {
