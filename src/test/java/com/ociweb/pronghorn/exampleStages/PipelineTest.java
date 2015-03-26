@@ -235,7 +235,7 @@ public class PipelineTest {
    	    //simple stage that reports to the console
 	   
 		SplitterStage stage = new SplitterStage(gm,ringBuffer, ringBuffer21, ringBuffer22);
-		
+				
 		RoundRobinRouteStage router21 = new RoundRobinRouteStage(gm, ringBuffer21, ringBuffer211, ringBuffer212);
 		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, ringBuffer211, expectedMsg, expected, expectedInts);
 		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, ringBuffer212, expectedMsg, expected, expectedInts);

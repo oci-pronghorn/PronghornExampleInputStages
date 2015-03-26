@@ -61,7 +61,6 @@ public class InputStageHighLevelExample extends PronghornStage {
 		
 		FIELD_VOLUME = lookupFieldLocator("Volume", MSG_DAILY_QUOTE, FROM);
 		
-		//TODO: skipped fields causes random data as we loop arrround so we cant unit test!!
 		
 	}
 	
@@ -70,12 +69,7 @@ public class InputStageHighLevelExample extends PronghornStage {
 	public void startup() {
 		
 		try{
-			
-			//optional feature that batches call to publishWrites, in some cases this
-			//can improve throughput by reducing contention with the reader of this queue.			
-			//RingWriter.setPublishBatchSize(output, 16);
-			
-			
+						
 		    ///////
 			//PUT YOUR LOGIC HERE FOR CONNTECTING TO THE DATABASE OR OTHER SOURCE OF INFORMATION
 			//////

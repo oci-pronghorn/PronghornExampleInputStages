@@ -8,8 +8,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -148,7 +150,10 @@ public class baselineTest {
 	//TOOD: need to build Java8 baseline exmple and Java7 handoff
 	
 	@Test
-	public void baselineTest() {
+	public void baselineBlockingQueueTest() {
+		
+		//TransferQueue<DailyQuote> xx = new LinkedTransferQueue<DailyQuote>();
+		
 		//LinkedBlockingQueue
 		//final BlockingQueue<DailyQuote> queue = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);		
 		final BlockingQueue<DailyQuote> queue = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
@@ -396,5 +401,256 @@ public class baselineTest {
 		
 	}
 	
+	
+	@Test
+	public void baselineTransferQueueTest() {
+		
+		//WARNING: this test makes use of unbounded queues	
+		final TransferQueue<DailyQuote> queue = new LinkedTransferQueue<DailyQuote>();
+		
+		final TransferQueue<DailyQuote> queue1 = new LinkedTransferQueue<DailyQuote>();
+		final TransferQueue<DailyQuote> queue11 = new LinkedTransferQueue<DailyQuote>();
+		final TransferQueue<DailyQuote> queue12 = new LinkedTransferQueue<DailyQuote>();
+		
+		final TransferQueue<DailyQuote> queue2 = new LinkedTransferQueue<DailyQuote>();
+		final TransferQueue<DailyQuote> queue21 = new LinkedTransferQueue<DailyQuote>();
+		final TransferQueue<DailyQuote> queue22 = new LinkedTransferQueue<DailyQuote>();
+		
+		final AtomicBoolean isLiving = new AtomicBoolean(true);
+		final AtomicLong messages11 = new AtomicLong();
+		final AtomicLong messages12 = new AtomicLong();
+		final AtomicLong messages21 = new AtomicLong();
+		final AtomicLong messages22 = new AtomicLong();
+		
+		
+		final DailyQuote expected = new DailyQuoteNode();
+		expected.writeSymbol(InputStageEventConsumerExample.testSymbol);
+		expected.writeCompanyName(InputStageEventConsumerExample.testCompanyName);
+		expected.writeHighPrice(InputStageEventConsumerExample.testHigh);
+		expected.writeLowPrice(InputStageEventConsumerExample.testLow);
+		expected.writeOpenPrice(InputStageEventConsumerExample.testOpen);
+		expected.writeClosedPrice(InputStageEventConsumerExample.testClose);
+		expected.writeVolume(InputStageEventConsumerExample.testVolume);
+		
+		
+		Runnable generator = new Runnable() {
+			
+			
+			@Override
+			public void run() {
+
+				//To make the test same as the other tests object creation is done outside the loop.
+				DailyQuote newInstance = new DailyQuoteNode();
+				
+				newInstance.writeSymbol(InputStageEventConsumerExample.testSymbol);
+				newInstance.writeCompanyName(InputStageEventConsumerExample.testCompanyName);
+				newInstance.writeHighPrice(InputStageEventConsumerExample.testHigh);
+				newInstance.writeLowPrice(InputStageEventConsumerExample.testLow);
+				newInstance.writeOpenPrice(InputStageEventConsumerExample.testOpen);
+				newInstance.writeClosedPrice(InputStageEventConsumerExample.testClose);
+				newInstance.writeVolume(InputStageEventConsumerExample.testVolume);								
+
+				try {
+					while (isLiving.get()) {				
+						queue.transfer(newInstance);	
+					}	
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}			
+		};
+		
+		Runnable splitter = new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					while (isLiving.get()) {
+						DailyQuote item = queue.take();
+						queue1.transfer(item);
+						queue2.transfer(item);				
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}			
+		};
+
+		Runnable router11 = new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					int count = 0;
+					while (isLiving.get()) {
+						
+							DailyQuote item = queue1.take();
+							
+							   //half one way and half the other
+							   if (0==(1&count++)) {	
+								   queue11.transfer(item);							
+							   } else {
+								   queue12.transfer(item);						   
+							   }	
+				
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}			
+		};
+		
+		Runnable dumper11 = new Runnable() {
+			int count;
+			
+			@Override
+			public void run() {
+				try {
+					while (isLiving.get()) {
+						
+							DailyQuote item = queue11.take();
+							if (!item.equals(expected)) {
+								fail("Objects no not match");
+							}
+							count++;
+									
+					}				
+					messages11.set(count);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}			
+		};
+		
+		Runnable dumper12 = new Runnable() {
+			int count;
+			
+			@Override
+			public void run() {
+				try{
+					while (isLiving.get()) {
+						
+							DailyQuote item = queue12.take();
+							if (!item.equals(expected)) {
+								fail("Objects no not match");
+							}
+							count++;
+				
+					}				
+					messages12.set(count);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}			
+		};
+		
+		
+		Runnable router12 = new Runnable() {
+
+			@Override
+			public void run() {
+				try{
+					int count = 0;
+					while (isLiving.get()) {
+						
+							DailyQuote item = queue2.take();
+							
+							   //half one way and half the other
+							   if (0==(1&count++)) {	
+								   queue21.transfer(item);
+							   } else {
+								   queue22.transfer(item);		   
+							   }	
+									
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}			
+		};
+		
+		Runnable dumper21 = new Runnable() {
+			int count;
+			
+			@Override
+			public void run() {
+				try{
+					while (isLiving.get()) {
+						
+							DailyQuote item = queue21.take();
+							if (!item.equals(expected)) {
+								fail("Objects no not match");
+							}
+							count++;
+						}					
+								
+					messages21.set(count);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}			
+		};
+		
+		Runnable dumper22 = new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					while (isLiving.get()) {
+						
+							DailyQuote item = queue22.take();
+							if (!item.equals(expected)) {
+								fail("Objects no not match");
+							}
+							messages22.incrementAndGet();	
+					}				
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}			
+		};
+		
+		ExecutorService executor = Executors.newFixedThreadPool(8);
+		
+		
+	    long startTime = System.currentTimeMillis();
+	    executor.execute(generator);
+	    executor.execute(splitter);
+	    
+	    executor.execute(router11);
+	    executor.execute(dumper11);
+	    executor.execute(dumper12);	    
+	    
+	    executor.execute(router12);
+	    executor.execute(dumper21);
+	    executor.execute(dumper22);
+	    
+		try {
+			Thread.sleep(PipelineTest.TEST_LENGTH_IN_SECONDS*1000);
+		} catch (InterruptedException e) {
+		}
+		isLiving.set(false);
+		executor.shutdown();
+		try {
+			boolean ok = executor.awaitTermination(PipelineTest.TIMEOUT_SECONDS, TimeUnit.SECONDS);
+			//unable to do a clean shutdown for this test so we do not bother checking
+		} catch (InterruptedException e) {
+			//ignore;
+		}
+		
+		long duration = System.currentTimeMillis()-startTime;
+		if (0!=duration) {
+			
+			long totalMessages1 = messages11.get()+messages12.get();
+			long totalMessages2 = messages21.get()+messages22.get();			
+			
+			
+			System.out.println("TotalMessages:"+totalMessages1 + 
+					           " Msg/Ms:"+(totalMessages1/(float)duration) 	+ "         Baseline with TransferQueue "+totalMessages1+" vs "+totalMessages2				           
+							  );
+			System.gc();
+		}
+		
+	}
 	
 }
