@@ -26,7 +26,7 @@ import com.ociweb.pronghorn.stage.scheduling.ThreadPerStageScheduler;
 public class PipelineTest {
 
 	static final long TIMEOUT_SECONDS = 3;
-	static final long TEST_LENGTH_IN_SECONDS = 7;
+	static final long TEST_LENGTH_IN_SECONDS = 5;
 	
 	private static FieldReferenceOffsetManager from;
 	public static final int messagesOnRing = 200;
