@@ -22,29 +22,23 @@ public class InputStageEventConsumerExample extends PronghornStage {
 		super(graphManager, NONE, output);		
 		consumer = new EventConsumer(output);
 	}
-			
-	//TODO: add new compiled version of this.  At compile time the annotations are processed and 
-	//      this source will be modified into a highLevel API usage using code generation.
-	//TODO: Must have normal Java BlockingQueue example as a benchmark
-	//TODO: after graph is built and before scheduling, we may also run the code generation.
-	//TODO: AAA, For reader in ALL APIs must also supply clear of previous read. 
 	
 	@Override
 	public void run() {
 				
-		DailyQuote dq = EventConsumer.create(consumer, DailyQuote.class);
-		if (null != dq) {
+		DailyQuoteConsumer dq = EventConsumer.create(consumer, DailyQuoteConsumer.class);
+		if (null != dq) {//null when there is no room on the output ring
 			populateFields(dq);
 			EventConsumer.publish(consumer, dq);
 		}
 		
 	}
 
-	private void populateFields(DailyQuote dq) {
+	private void populateFields(DailyQuoteConsumer dq) {
 		dq.writeEmptyField(null);
 		
-		dq.writeOpenPrice(testOpen);
 		dq.writeClosedPrice(testClose);
+		dq.writeOpenPrice(testOpen);
 		dq.writeHighPrice(testHigh);
 		dq.writeLowPrice(testLow);
 		dq.writeVolume(testVolume);

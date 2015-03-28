@@ -19,7 +19,7 @@ import org.junit.Test;
 
 public class baselineTest {
 
-	private final class DailyQuoteNode implements DailyQuote {
+	private final class DailyQuoteNode implements DailyQuoteConsumer {
 		
 		private String symbol;
 		private String companyName;
@@ -156,15 +156,15 @@ public class baselineTest {
 		
 		//LinkedBlockingQueue
 		//final BlockingQueue<DailyQuote> queue = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);		
-		final BlockingQueue<DailyQuote> queue = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
+		final BlockingQueue<DailyQuoteConsumer> queue = new ArrayBlockingQueue<DailyQuoteConsumer>(PipelineTest.messagesOnRing);
 		
-		final BlockingQueue<DailyQuote> queue1 = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
-		final BlockingQueue<DailyQuote> queue11 = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
-		final BlockingQueue<DailyQuote> queue12 = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
+		final BlockingQueue<DailyQuoteConsumer> queue1 = new ArrayBlockingQueue<DailyQuoteConsumer>(PipelineTest.messagesOnRing);
+		final BlockingQueue<DailyQuoteConsumer> queue11 = new ArrayBlockingQueue<DailyQuoteConsumer>(PipelineTest.messagesOnRing);
+		final BlockingQueue<DailyQuoteConsumer> queue12 = new ArrayBlockingQueue<DailyQuoteConsumer>(PipelineTest.messagesOnRing);
 		
-		final BlockingQueue<DailyQuote> queue2 = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
-		final BlockingQueue<DailyQuote> queue21 = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
-		final BlockingQueue<DailyQuote> queue22 = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);
+		final BlockingQueue<DailyQuoteConsumer> queue2 = new ArrayBlockingQueue<DailyQuoteConsumer>(PipelineTest.messagesOnRing);
+		final BlockingQueue<DailyQuoteConsumer> queue21 = new ArrayBlockingQueue<DailyQuoteConsumer>(PipelineTest.messagesOnRing);
+		final BlockingQueue<DailyQuoteConsumer> queue22 = new ArrayBlockingQueue<DailyQuoteConsumer>(PipelineTest.messagesOnRing);
 		
 		final AtomicBoolean isLiving = new AtomicBoolean(true);
 		final AtomicLong messages11 = new AtomicLong();
@@ -173,7 +173,7 @@ public class baselineTest {
 		final AtomicLong messages22 = new AtomicLong();
 		
 		
-		final DailyQuote expected = new DailyQuoteNode();
+		final DailyQuoteConsumer expected = new DailyQuoteNode();
 		expected.writeSymbol(InputStageEventConsumerExample.testSymbol);
 		expected.writeCompanyName(InputStageEventConsumerExample.testCompanyName);
 		expected.writeHighPrice(InputStageEventConsumerExample.testHigh);
@@ -190,7 +190,7 @@ public class baselineTest {
 			public void run() {
 
 				//To make the test same as the other tests object creation is done outside the loop.
-				DailyQuote newInstance = new DailyQuoteNode();
+				DailyQuoteConsumer newInstance = new DailyQuoteNode();
 				
 				newInstance.writeSymbol(InputStageEventConsumerExample.testSymbol);
 				newInstance.writeCompanyName(InputStageEventConsumerExample.testCompanyName);
@@ -217,7 +217,7 @@ public class baselineTest {
 				while (isLiving.get()) {
 					
 					while (!queue.isEmpty() && isLiving.get()) {
-						DailyQuote item = queue.remove();
+						DailyQuoteConsumer item = queue.remove();
 						
 							while (!queue1.offer(item) && isLiving.get()){
 								Thread.yield();
@@ -239,7 +239,7 @@ public class baselineTest {
 				while (isLiving.get()) {
 					
 					while (!queue1.isEmpty() && isLiving.get()) {
-						DailyQuote item = queue1.remove();
+						DailyQuoteConsumer item = queue1.remove();
 						
 						   //half one way and half the other
 						   if (0==(1&count++)) {						   
@@ -264,7 +264,7 @@ public class baselineTest {
 				while (isLiving.get()) {
 					
 					while (!queue11.isEmpty() && isLiving.get()) {
-						DailyQuote item = queue11.remove();
+						DailyQuoteConsumer item = queue11.remove();
 						if (!item.equals(expected)) {
 							fail("Objects no not match");
 						}
@@ -283,7 +283,7 @@ public class baselineTest {
 				while (isLiving.get()) {
 					
 					while (!queue12.isEmpty() && isLiving.get()) {
-						DailyQuote item = queue12.remove();
+						DailyQuoteConsumer item = queue12.remove();
 						if (!item.equals(expected)) {
 							fail("Objects no not match");
 						}
@@ -303,7 +303,7 @@ public class baselineTest {
 				while (isLiving.get()) {
 					
 					while (!queue2.isEmpty() && isLiving.get()) {
-						DailyQuote item = queue2.remove();
+						DailyQuoteConsumer item = queue2.remove();
 						
 						   //half one way and half the other
 						   if (0==(1&count++)) {						   
@@ -328,7 +328,7 @@ public class baselineTest {
 				while (isLiving.get()) {
 					
 					while (!queue21.isEmpty() && isLiving.get()) {
-						DailyQuote item = queue21.remove();
+						DailyQuoteConsumer item = queue21.remove();
 						if (!item.equals(expected)) {
 							fail("Objects no not match");
 						}
@@ -347,7 +347,7 @@ public class baselineTest {
 				while (isLiving.get()) {
 					
 					while (!queue22.isEmpty() && isLiving.get()) {
-						DailyQuote item = queue22.remove();
+						DailyQuoteConsumer item = queue22.remove();
 						if (!item.equals(expected)) {
 							fail("Objects no not match");
 						}
@@ -406,15 +406,15 @@ public class baselineTest {
 	public void baselineTransferQueueTest() {
 		
 		//WARNING: this test makes use of unbounded queues	
-		final TransferQueue<DailyQuote> queue = new LinkedTransferQueue<DailyQuote>();
+		final TransferQueue<DailyQuoteConsumer> queue = new LinkedTransferQueue<DailyQuoteConsumer>();
 		
-		final TransferQueue<DailyQuote> queue1 = new LinkedTransferQueue<DailyQuote>();
-		final TransferQueue<DailyQuote> queue11 = new LinkedTransferQueue<DailyQuote>();
-		final TransferQueue<DailyQuote> queue12 = new LinkedTransferQueue<DailyQuote>();
+		final TransferQueue<DailyQuoteConsumer> queue1 = new LinkedTransferQueue<DailyQuoteConsumer>();
+		final TransferQueue<DailyQuoteConsumer> queue11 = new LinkedTransferQueue<DailyQuoteConsumer>();
+		final TransferQueue<DailyQuoteConsumer> queue12 = new LinkedTransferQueue<DailyQuoteConsumer>();
 		
-		final TransferQueue<DailyQuote> queue2 = new LinkedTransferQueue<DailyQuote>();
-		final TransferQueue<DailyQuote> queue21 = new LinkedTransferQueue<DailyQuote>();
-		final TransferQueue<DailyQuote> queue22 = new LinkedTransferQueue<DailyQuote>();
+		final TransferQueue<DailyQuoteConsumer> queue2 = new LinkedTransferQueue<DailyQuoteConsumer>();
+		final TransferQueue<DailyQuoteConsumer> queue21 = new LinkedTransferQueue<DailyQuoteConsumer>();
+		final TransferQueue<DailyQuoteConsumer> queue22 = new LinkedTransferQueue<DailyQuoteConsumer>();
 		
 		final AtomicBoolean isLiving = new AtomicBoolean(true);
 		final AtomicLong messages11 = new AtomicLong();
@@ -423,7 +423,7 @@ public class baselineTest {
 		final AtomicLong messages22 = new AtomicLong();
 		
 		
-		final DailyQuote expected = new DailyQuoteNode();
+		final DailyQuoteConsumer expected = new DailyQuoteNode();
 		expected.writeSymbol(InputStageEventConsumerExample.testSymbol);
 		expected.writeCompanyName(InputStageEventConsumerExample.testCompanyName);
 		expected.writeHighPrice(InputStageEventConsumerExample.testHigh);
@@ -440,7 +440,7 @@ public class baselineTest {
 			public void run() {
 
 				//To make the test same as the other tests object creation is done outside the loop.
-				DailyQuote newInstance = new DailyQuoteNode();
+				DailyQuoteConsumer newInstance = new DailyQuoteNode();
 				
 				newInstance.writeSymbol(InputStageEventConsumerExample.testSymbol);
 				newInstance.writeCompanyName(InputStageEventConsumerExample.testCompanyName);
@@ -466,7 +466,7 @@ public class baselineTest {
 			public void run() {
 				try {
 					while (isLiving.get()) {
-						DailyQuote item = queue.take();
+						DailyQuoteConsumer item = queue.take();
 						queue1.transfer(item);
 						queue2.transfer(item);				
 					}
@@ -484,7 +484,7 @@ public class baselineTest {
 					int count = 0;
 					while (isLiving.get()) {
 						
-							DailyQuote item = queue1.take();
+							DailyQuoteConsumer item = queue1.take();
 							
 							   //half one way and half the other
 							   if (0==(1&count++)) {	
@@ -508,7 +508,7 @@ public class baselineTest {
 				try {
 					while (isLiving.get()) {
 						
-							DailyQuote item = queue11.take();
+							DailyQuoteConsumer item = queue11.take();
 							if (!item.equals(expected)) {
 								fail("Objects no not match");
 							}
@@ -530,7 +530,7 @@ public class baselineTest {
 				try{
 					while (isLiving.get()) {
 						
-							DailyQuote item = queue12.take();
+							DailyQuoteConsumer item = queue12.take();
 							if (!item.equals(expected)) {
 								fail("Objects no not match");
 							}
@@ -553,7 +553,7 @@ public class baselineTest {
 					int count = 0;
 					while (isLiving.get()) {
 						
-							DailyQuote item = queue2.take();
+							DailyQuoteConsumer item = queue2.take();
 							
 							   //half one way and half the other
 							   if (0==(1&count++)) {	
@@ -577,7 +577,7 @@ public class baselineTest {
 				try{
 					while (isLiving.get()) {
 						
-							DailyQuote item = queue21.take();
+							DailyQuoteConsumer item = queue21.take();
 							if (!item.equals(expected)) {
 								fail("Objects no not match");
 							}
@@ -598,7 +598,7 @@ public class baselineTest {
 				try {
 					while (isLiving.get()) {
 						
-							DailyQuote item = queue22.take();
+							DailyQuoteConsumer item = queue22.take();
 							if (!item.equals(expected)) {
 								fail("Objects no not match");
 							}

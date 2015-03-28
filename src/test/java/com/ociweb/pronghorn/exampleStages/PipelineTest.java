@@ -229,11 +229,11 @@ public class PipelineTest {
 		
    	    //	build the expected data that should be found on the byte ring.
    	    final byte[] expected = (iso.testSymbol+iso.testCompanyName).getBytes();
-   	    int expectedMsg = from.messageStarts[1];
-   	    
+   	    int expectedMsg = from.messageStarts[1];   	    
 		final int[] expectedInts = new int[] {8, 0, 3, 3, 31, 0, 0, 2, 0, 2343, 2, 0, 8000, 2, 0, 2000, 2, 0, 7230, 0, 10000000, 34};
    	    //simple stage that reports to the console
 	   
+		
 		SplitterStage stage = new SplitterStage(gm,ringBuffer, ringBuffer21, ringBuffer22);
 				
 		RoundRobinRouteStage router21 = new RoundRobinRouteStage(gm, ringBuffer21, ringBuffer211, ringBuffer212);

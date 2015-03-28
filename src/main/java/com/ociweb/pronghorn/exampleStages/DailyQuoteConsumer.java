@@ -4,7 +4,7 @@ import com.ociweb.pronghorn.ring.proxy.ProngTemplateField;
 import com.ociweb.pronghorn.ring.proxy.ProngTemplateMessage;
 
 @ProngTemplateMessage(templateId=10000)
-public interface DailyQuote {
+public interface DailyQuoteConsumer {
 
 	@ProngTemplateField(fieldId=4)	
 	void writeSymbol(String symbol);
