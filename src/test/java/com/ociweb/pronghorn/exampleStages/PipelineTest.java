@@ -61,7 +61,36 @@ public class PipelineTest {
 	@Test
 	public void lowLevelInputStageTest() {
 								
+		final byte[] expected = new String("tcp://localhost:1883thingFortytworoot/colors/blue        ").getBytes();	
+		
+		int j = 8;	   		
+		while (--j>=0) {
+			expected[expected.length-(8-j)] = (byte)j;
+		}
+		//build the expected data that should be found on the byte ring.
+		final int[] expectedInts = new int[]{0, 0, 20, 20, 13, 42, 33, 16, 49, 8, 0, 57};		
+		final int expectedMsg = 0;
+		
+	   	CheckStageArguments checkArgs = new CheckStageArguments() {
+
+			@Override
+			public int expectedMessageIdx() {
+				return expectedMsg;
+			}
 	
+			@Override
+			public byte[] expectedBytes() {
+				return expected;
+			}
+	
+			@Override
+			public int[] expectedInts() {
+				return expectedInts;
+			}
+	   		 
+	   	 };
+				
+		
 		RingBuffer ringBuffer = new RingBuffer(ringBufferConfig);
 		RingBuffer ringBuffer21 = new RingBuffer(ringBufferConfig.grow2x());
 		RingBuffer ringBuffer211 = new RingBuffer(ringBufferConfig);
@@ -69,28 +98,10 @@ public class PipelineTest {
 		RingBuffer ringBuffer22 = new RingBuffer(ringBufferConfig.grow2x());
 		RingBuffer ringBuffer221 = new RingBuffer(ringBufferConfig);
 		RingBuffer ringBuffer222 = new RingBuffer(ringBufferConfig);
-		
-		//Just to confirm that we are starting at zero before running the test.
-		assertEquals(0, RingBuffer.headPosition(ringBuffer));
-		assertEquals(0, RingBuffer.bytesHeadPosition(ringBuffer));
-		assertEquals(0, RingBuffer.headPosition(ringBuffer21));
-		assertEquals(0, RingBuffer.bytesHeadPosition(ringBuffer21));
-		
-		//build the expected data that should be found on the byte ring.
-		final byte[] expected = new String("tcp://localhost:1883thingFortytworoot/colors/blue        ").getBytes();
-		int j = 8;
-		while (--j>=0) {
-			expected[expected.length-(8-j)] = (byte)j;
-		}
-		final int[] expectedInts = new int[]{0, 0, 20, 20, 13, 42, 33, 16, 49, 8, 0, 57};		
-		int expectedMsg = 0;
+
 		
    	    GraphManager gm = new GraphManager();
-   	    
-   	    //TODO: each stage can get a NAME.
-		
-   	    
-		
+
 		InputStageLowLevelExample  iso = new InputStageLowLevelExample(gm, ringBuffer); //full queue
 		
 		//simple stage that reports to the console
@@ -98,20 +109,29 @@ public class PipelineTest {
 		SplitterStage stage = new SplitterStage(gm, ringBuffer, ringBuffer21, ringBuffer22);	//mostly full queue
 		
 		RoundRobinRouteStage router21 = new RoundRobinRouteStage(gm, ringBuffer21, ringBuffer211, ringBuffer212); //mostly empty
-		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, ringBuffer211, expectedMsg, expected, expectedInts);
-		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, ringBuffer212, expectedMsg, expected, expectedInts);
+		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, ringBuffer211, checkArgs);
+		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, ringBuffer212, checkArgs);
 					
 		RoundRobinRouteStage router22 = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222); //mostly empty
-		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, expectedMsg, expected, expectedInts);
-		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, expectedMsg, expected, expectedInts);
+		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, checkArgs);
+		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, checkArgs);
 		
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new MonitorConsoleStage(gm, GraphManager.attachMonitorsToGraph(gm, monitorRate, ringBufferMonitorConfig)));
+		//add arguments object with keys/values
+		//classic  Object[] args
+		//ring     RingBuffer args with schema, Immmutable read many ? this would give us primitives in order with one object.
+		//     T t   H h   roll back and re-read?
+		// use simple interface that we can wrap around a ring buffer or something else.
+		// eventProducer? streamingVisitor?    StageArgProducer
+		
+		
+		//Add monitoring
+		MonitorConsoleStage.attach(gm, monitorRate, ringBufferMonitorConfig);
 		
 		//Enable batching
 		GraphManager.enableBatching(gm);
 				
 		
-		long totalMessages = timeAndRunTest(ringBuffer22, gm, expected, " low level", dumpStage21, dumpStage22);
+		long totalMessages = timeAndRunTest(ringBuffer22, gm, expected.length, " low level", dumpStage21, dumpStage22);
 		long expectedMessages = dumpStage11.messageCount() + dumpStage12.messageCount();
 		assertEquals(expectedMessages,totalMessages);
 		
@@ -120,11 +140,9 @@ public class PipelineTest {
 	
 	@Test
 	public void lowLevelInputStageSimpleTest() {
-								
-	
+							
 		RingBuffer ringBuffer = new RingBuffer(ringBufferConfig);
-		
-		
+				
 		//build the expected data that should be found on the byte ring.
 		final byte[] expected = new String("tcp://localhost:1883thingFortytworoot/colors/blue        ").getBytes();
 		int j = 8;
@@ -132,19 +150,38 @@ public class PipelineTest {
 			expected[expected.length-(8-j)] = (byte)j;
 		}
 		final int[] expectedInts = new int[]{0, 0, 20, 20, 13, 42, 33, 16, 49, 8, 0, 57};		
-		int expectedMsg = 0;
+		final int expectedMsg = 0;
+		
+	   	CheckStageArguments checkArgs = new CheckStageArguments() {
+
+			@Override
+			public int expectedMessageIdx() {
+				return expectedMsg;
+			}
+	
+			@Override
+			public byte[] expectedBytes() {
+				return expected;
+			}
+	
+			@Override
+			public int[] expectedInts() {
+				return expectedInts;
+			}
+	   		 
+	   	 };
+		
 		
    	    GraphManager gm = new GraphManager();
    	    
    		//Enable batching
-		GraphManager.enableBatching(gm);
-			
+		GraphManager.enableBatching(gm);			
 		
 		InputStageLowLevelExample  iso = new InputStageLowLevelExample(gm, ringBuffer); //full queue
 		
-		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer, expectedMsg, null, null /*expected, expectedInts*/);
+		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer, checkArgs);
 		
-		timeAndRunTest(ringBuffer, gm, expected, " SimpleLowLevel", dumpStage22);   
+		timeAndRunTest(ringBuffer, gm, expected.length, " SimpleLowLevel", dumpStage22);   
 		
 	}
 	
@@ -173,29 +210,48 @@ public class PipelineTest {
 		
    	    //	build the expected data that should be found on the byte ring.
    	    final byte[] expected = (iso.testSymbol+iso.testCompanyName).getBytes();
-   	    int expectedMsg = from.messageStarts[1];
+   	    final int expectedMsg = from.messageStarts[1];
    	    final int[] expectedInts =  new int[] {8, 0, 3, 3, 31, 0, 0, 2, 0, 10250, 2, 0, 10250, 2, 0, 10250, 2, 0, 10250, 0, 10000000, 34};
 		
+	   	CheckStageArguments checkArgs = new CheckStageArguments() {
+
+			@Override
+			public int expectedMessageIdx() {
+				return expectedMsg;
+			}
+	
+			@Override
+			public byte[] expectedBytes() {
+				return expected;
+			}
+	
+			@Override
+			public int[] expectedInts() {
+				return expectedInts;
+			}
+	   		 
+	   	 };
+   	    
    	    //simple stage that reports to the console
 	   
 		SplitterStage stage = new SplitterStage(gm,ringBuffer, ringBuffer21, ringBuffer22);	
 
 		RoundRobinRouteStage router21 = new RoundRobinRouteStage(gm, ringBuffer21, ringBuffer211, ringBuffer212);
-		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, ringBuffer211, expectedMsg, expected, expectedInts);
-		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, ringBuffer212, expectedMsg, expected, expectedInts);
+		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, ringBuffer211, checkArgs);
+		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, ringBuffer212, checkArgs);
 					
 		RoundRobinRouteStage router22 = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222);
-		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, expectedMsg, expected, expectedInts);
-		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, expectedMsg, expected, expectedInts);
+		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, checkArgs);
+		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, checkArgs);
 
 		//Turn on monitoring
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new MonitorConsoleStage(gm, GraphManager.attachMonitorsToGraph(gm, monitorRate, ringBufferMonitorConfig)));	
+		MonitorConsoleStage.attach(gm, monitorRate, ringBufferMonitorConfig);
 		
 		//Enable batching
 		GraphManager.enableBatching(gm);
 		
 		
-	    long totalMessages = timeAndRunTest(ringBuffer22, gm, expected, " HighLevel", dumpStage21, dumpStage22);   
+	    long totalMessages = timeAndRunTest(ringBuffer22, gm, expected.length, " HighLevel", dumpStage21, dumpStage22);   
 	    long expectedMessages = dumpStage11.messageCount() + dumpStage12.messageCount();
 	    assertEquals(expectedMessages,totalMessages);
 		
@@ -223,40 +279,60 @@ public class PipelineTest {
 		
 		
    	    GraphManager gm = new GraphManager();
-   	    
-				
-        InputStageEventConsumerExample  iso = new InputStageEventConsumerExample(gm, ringBuffer);
-		
-   	    //	build the expected data that should be found on the byte ring.
-   	    final byte[] expected = (iso.testSymbol+iso.testCompanyName).getBytes();
-   	    int expectedMsg = from.messageStarts[1];   	    
-		final int[] expectedInts = new int[] {8, 0, 3, 3, 31, 0, 0, 2, 0, 2343, 2, 0, 8000, 2, 0, 2000, 2, 0, 7230, 0, 10000000, 34};
-   	    //simple stage that reports to the console
-	   
+   	    				
+        final InputStageEventConsumerExample  iso = new InputStageEventConsumerExample(gm, ringBuffer);
+			   
 		
 		SplitterStage stage = new SplitterStage(gm,ringBuffer, ringBuffer21, ringBuffer22);
-				
+		
+		
+		CheckStageArguments checkArgs = new CheckStageArguments() {
+			//	build the expected data that should be found on the byte ring.
+			final byte[] expected = (iso.testSymbol+iso.testCompanyName).getBytes();
+			int expectedMsg = from.messageStarts[1];   	    
+			final int[] expectedInts = new int[] {8, 0, 3, 3, 31, 0, 0, 2, 0, 2343, 2, 0, 8000, 2, 0, 2000, 2, 0, 7230, 0, 10000000, 34};
+			//simple stage that reports to the console
+
+			@Override
+			public int expectedMessageIdx() {
+				return expectedMsg;
+			}
+
+			@Override
+			public byte[] expectedBytes() {
+				return expected;
+			}
+
+			@Override
+			public int[] expectedInts() {
+				return expectedInts;
+			}
+			
+		};
+		
+		int expectedBytes = iso.testSymbol.length() + iso.testCompanyName.length();
+						
 		RoundRobinRouteStage router21 = new RoundRobinRouteStage(gm, ringBuffer21, ringBuffer211, ringBuffer212);
-		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, ringBuffer211, expectedMsg, expected, expectedInts);
-		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, ringBuffer212, expectedMsg, expected, expectedInts);
+		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, ringBuffer211, checkArgs);
+		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, ringBuffer212, checkArgs);
 					
 		RoundRobinRouteStage router22 = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222);
-		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, expectedMsg, expected, expectedInts);
-		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, expectedMsg, expected, expectedInts);
+		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, checkArgs);
+		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, checkArgs);
 		
-		GraphManager.addAnnotation(gm, GraphManager.SCHEDULE_RATE, monitorRate, new MonitorConsoleStage(gm, GraphManager.attachMonitorsToGraph(gm, monitorRate, ringBufferMonitorConfig)));
+		MonitorConsoleStage.attach(gm, monitorRate, ringBufferMonitorConfig);
 		
 		//Enable batching
 		GraphManager.enableBatching(gm);
 		
-		long totalMessages = timeAndRunTest(ringBuffer22, gm, expected, " EventConsumer", dumpStage21, dumpStage22);   
+		long totalMessages = timeAndRunTest(ringBuffer22, gm, expectedBytes, " EventConsumer", dumpStage21, dumpStage22);   
 	    long expectedMessages = dumpStage11.messageCount() + dumpStage12.messageCount();
 	    assertEquals(expectedMessages,totalMessages);
 	}
 	
 
 	private long timeAndRunTest(RingBuffer ringBuffer, GraphManager gm,
-			final byte[] expected, String label, CheckVarLengthValuesStage ... countStages) {
+			final int expectedBytes, String label, CheckVarLengthValuesStage ... countStages) {
 		StageScheduler scheduler = new ThreadPerStageScheduler(GraphManager.cloneAll(gm));
 		 
 	    long startTime = System.currentTimeMillis();
@@ -286,7 +362,7 @@ public class PipelineTest {
 				
 		long duration = System.currentTimeMillis()-startTime;
 		if (0!=duration) {
-			assertEquals(bytes,(messages*expected.length));
+			assertEquals(bytes,(messages*expectedBytes));
 			
 			long bytesMoved = (4*RingBuffer.headPosition(ringBuffer))+bytes;
 			float mbMoved = (8f*bytesMoved)/(float)(1<<20);
@@ -303,7 +379,18 @@ public class PipelineTest {
 		return messages;
 	}
 	
+	
+	private interface CheckStageArguments {		
+		
+		public int expectedMessageIdx(); 
+		public byte[] expectedBytes();
+		public int[] expectedInts();
+        		
+	}
+
 	private final class CheckVarLengthValuesStage extends PronghornStage {
+		
+
 		private final RingBuffer inputRing;
 		private final int expectedMessageIdx;
 		private final byte[] expectedBytes;
@@ -313,17 +400,16 @@ public class PipelineTest {
 
 		private volatile long count;
 		private volatile long bytes;
+		
 
-		private CheckVarLengthValuesStage(GraphManager gm,RingBuffer inputRing, 
-				                          int expectedMessageIdx, 
-				                          byte[] expectedBytes,
-				                          int[] expectedInts
-				                          ) {
+		//Runnable args = new test();
+
+		private CheckVarLengthValuesStage(GraphManager gm, RingBuffer inputRing, CheckStageArguments args) {
 			super(gm, inputRing, NONE);
 			this.inputRing = inputRing;
-			this.expectedMessageIdx = expectedMessageIdx;
-			this.expectedBytes = expectedBytes;
-			this.expectedInts = expectedInts;
+			this.expectedMessageIdx = args.expectedMessageIdx();
+			this.expectedBytes = args.expectedBytes();
+			this.expectedInts = args.expectedInts();
 			this.from = RingBuffer.from(inputRing);
 			this.fragSize = from.fragDataSize[expectedMessageIdx];
 			
