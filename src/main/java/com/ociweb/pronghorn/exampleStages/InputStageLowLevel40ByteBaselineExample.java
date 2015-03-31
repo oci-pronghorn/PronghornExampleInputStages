@@ -7,7 +7,10 @@ import com.ociweb.pronghorn.ring.RingBuffer;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 
-public class InputStageLowLevelExample extends PronghornStage {
+/*
+ * Aeron testing is done with a 40 byte message baseline, this does the same for comparisons
+ */
+public class InputStageLowLevel40ByteBaselineExample extends PronghornStage {
 
 	//all members should be private final unless the reason is documented with a clear comment 
 	private final RingBuffer output;
@@ -16,13 +19,10 @@ public class InputStageLowLevelExample extends PronghornStage {
 	private final int sizeOfFragment;
 	private final FieldReferenceOffsetManager FROM; //Acronym so this is in all caps (this holds the schema)
 	
-	
+		
 	private int fragToWrite;
-	private String serverURI = "tcp://localhost:1883";
-	private String clientId = "thingFortytwo";
-	private int    clientIdIndex = 42;	
-	private String topic = "root/colors/blue";
-	private byte[] payload = new byte[]{0,1,2,3,4,5,6,7};
+	
+	public byte[] payload;
 	
 	/**
 	 * This is an example of a input stage that uses the low level API.  This is the most difficult to use API for 
@@ -47,7 +47,7 @@ public class InputStageLowLevelExample extends PronghornStage {
 	 * @param graphManager
 	 * @param output
 	 */
-	protected InputStageLowLevelExample(GraphManager graphManager, RingBuffer output) {
+	protected InputStageLowLevel40ByteBaselineExample(GraphManager graphManager, RingBuffer output) {
 		super(graphManager, NONE, output);
 		
 		////////
@@ -81,12 +81,7 @@ public class InputStageLowLevelExample extends PronghornStage {
 		//if not we should throw now to stop the construction early
 		///////////
 		
-		if (!"MQTTMsg".equals(from.fieldNameScript[msgIdx])) {
-			throw new UnsupportedOperationException("Expected to find message template MQTTMsg");
-		}
-		if (100!=from.fieldIdScript[msgIdx]) {
-			throw new UnsupportedOperationException("Expected to find message template MQTTMsg with id 100");
-		}
+		assert(from==FieldReferenceOffsetManager.RAW_BYTES);
 	}
 		
 	
@@ -100,6 +95,14 @@ public class InputStageLowLevelExample extends PronghornStage {
 		    ///////
 			//PUT YOUR LOGIC HERE FOR CONNTECTING TO THE DATABASE OR OTHER SOURCE OF INFORMATION
 			//////
+			
+			int size = 40-8;//do not count len and pos
+			
+			payload = new byte[size];
+			int i = size;
+			while (--i>=0) {
+				payload[i]=(byte)i;
+			}
 			
 			
 					
@@ -143,15 +146,9 @@ public class InputStageLowLevelExample extends PronghornStage {
 			
 			//when starting a new message this method must be used to record the message template id, and do internal housekeeping
 			addMsgIdx(output, fragToWrite);					
-						
-			addASCII(serverURI, 0, serverURI.length(), output); //serverURI
-			addUTF8(clientId, 0, clientId.length(), output); //clientId			
-			addIntValue(clientIdIndex, output);  //clientId index								
-			addASCII(topic, 0, topic.length(), output); //topic		
+							
 			addByteArray(payload, 0, payload.length, output);// payload 
-			
-			addIntValue(0, output); //QoS field
-	
+				
 			//NOTE: if writing a decimal field it is done with two statements
 			//      addIntValue(EXPONENT, output) //this is a value between -64 and +64 for moving the decimal place of the mantissa
 			//      addLongValue(MANTISSA,  output) //this is a normal long value holding all the digits of the decimal

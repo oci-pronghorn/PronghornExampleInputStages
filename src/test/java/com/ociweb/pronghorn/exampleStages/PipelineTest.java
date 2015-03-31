@@ -11,6 +11,8 @@ import org.junit.Test;
 
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;
+import com.ociweb.pronghorn.ring.RingBuffer.PaddedInt;
+import com.ociweb.pronghorn.ring.RingBuffer.PaddedLong;
 import com.ociweb.pronghorn.ring.RingBufferConfig;
 import com.ociweb.pronghorn.ring.loader.TemplateHandler;
 import com.ociweb.pronghorn.stage.PronghornStage;
@@ -26,10 +28,10 @@ import com.ociweb.pronghorn.stage.scheduling.ThreadPerStageScheduler;
 public class PipelineTest {
 
 	static final long TIMEOUT_SECONDS = 3;
-	static final long TEST_LENGTH_IN_SECONDS = 5;
+	static final long TEST_LENGTH_IN_SECONDS = 7;
 	
 	private static FieldReferenceOffsetManager from;
-	public static final int messagesOnRing = 200;
+	public static final int messagesOnRing = 1024;
 	public static final int monitorMessagesOnRing = 7;
 	
 	private static final int maxLengthVarField = 40;
@@ -139,49 +141,111 @@ public class PipelineTest {
 	
 	
 	@Test
-	public void lowLevelInputStageSimpleTest() {
+	public void lowLevelInputStageSimple40Test() {
 							
-		RingBuffer ringBuffer = new RingBuffer(ringBufferConfig);
-				
-		//build the expected data that should be found on the byte ring.
-		final byte[] expected = new String("tcp://localhost:1883thingFortytworoot/colors/blue        ").getBytes();
-		int j = 8;
-		while (--j>=0) {
-			expected[expected.length-(8-j)] = (byte)j;
-		}
-		final int[] expectedInts = new int[]{0, 0, 20, 20, 13, 42, 33, 16, 49, 8, 0, 57};		
-		final int expectedMsg = 0;
-		
-	   	CheckStageArguments checkArgs = new CheckStageArguments() {
-
-			@Override
-			public int expectedMessageIdx() {
-				return expectedMsg;
-			}
-	
-			@Override
-			public byte[] expectedBytes() {
-				return expected;
-			}
-	
-			@Override
-			public int[] expectedInts() {
-				return expectedInts;
-			}
-	   		 
-	   	 };
+		RingBufferConfig config = new RingBufferConfig(FieldReferenceOffsetManager.RAW_BYTES, 1<<14, 50);
+		RingBuffer ringBuffer = new RingBuffer(config);
 		
 		
    	    GraphManager gm = new GraphManager();
-   	    
-   		//Enable batching
-		GraphManager.enableBatching(gm);			
+   	    	
 		
-		InputStageLowLevelExample  iso = new InputStageLowLevelExample(gm, ringBuffer); //full queue
+		InputStageLowLevel40ByteBaselineExample  iso = new InputStageLowLevel40ByteBaselineExample(gm, ringBuffer); //full queue
+
+		final byte[] expectedBytes = iso.payload;
+		
+		
+		CheckStageArguments checkArgs = new CheckStageArguments() {
+			
+			@Override
+			public int expectedMessageIdx() {
+				return 0;
+			}
+			
+			@Override
+			public byte[] expectedBytes() {
+				return expectedBytes;
+			}
+			
+			@Override
+			public int[] expectedInts() {
+				return new int[]{0,0,32};
+			}
+			
+		};
 		
 		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer, checkArgs);
 		
-		timeAndRunTest(ringBuffer, gm, expected.length, " SimpleLowLevel", dumpStage22);   
+		GraphManager.enableBatching(gm);
+		
+		timeAndRunTest(ringBuffer, gm, 0, " Simple40LowLevel", dumpStage22);   
+		
+	}
+	
+	@Test
+	public void lowLevel40InputStageTest() {
+								
+		RingBufferConfig config = new RingBufferConfig(FieldReferenceOffsetManager.RAW_BYTES, 1<<14, 50);
+				
+		
+		RingBuffer ringBuffer = new RingBuffer(config);
+		RingBuffer ringBuffer21 = new RingBuffer(config.grow2x().grow2x()); //TODO: this is showing round robin to be a problem.
+		RingBuffer ringBuffer211 = new RingBuffer(config);
+		RingBuffer ringBuffer212 = new RingBuffer(config);
+		RingBuffer ringBuffer22 = new RingBuffer(config.grow2x().grow2x());
+		RingBuffer ringBuffer221 = new RingBuffer(config);
+		RingBuffer ringBuffer222 = new RingBuffer(config);
+
+		
+   	    GraphManager gm = new GraphManager();
+
+        InputStageLowLevel40ByteBaselineExample  iso = new InputStageLowLevel40ByteBaselineExample(gm, ringBuffer); //full queue
+		
+		final byte[] expectedBytes = iso.payload;
+		
+		
+		CheckStageArguments checkArgs = new CheckStageArguments() {
+			
+			@Override
+			public int expectedMessageIdx() {
+				return 0;
+			}
+			
+			@Override
+			public byte[] expectedBytes() {
+				return expectedBytes;
+			}
+			
+			@Override
+			public int[] expectedInts() {
+				return new int[]{0,0,32};
+			}
+			
+		};
+        
+        
+		//simple stage that reports to the console
+	   
+		SplitterStage stage = new SplitterStage(gm, ringBuffer, ringBuffer21, ringBuffer22);	//mostly full queue
+		
+		RoundRobinRouteStage router21 = new RoundRobinRouteStage(gm, ringBuffer21, ringBuffer211, ringBuffer212); //mostly empty
+		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, ringBuffer211, checkArgs);
+		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, ringBuffer212, checkArgs);
+					
+		RoundRobinRouteStage router22 = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222); //mostly empty
+		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, checkArgs);
+		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, checkArgs);
+		
+		//Add monitoring
+		MonitorConsoleStage.attach(gm, monitorRate, ringBufferMonitorConfig);
+		
+		//Enable batching
+		GraphManager.enableBatching(gm);
+				
+		
+		long totalMessages = timeAndRunTest(ringBuffer22, gm, 0, " low level 40 ", dumpStage21, dumpStage22);
+		long expectedMessages = dumpStage11.messageCount() + dumpStage12.messageCount();
+		assertEquals(expectedMessages,totalMessages);
 		
 	}
 	
@@ -351,6 +415,7 @@ public class PipelineTest {
 		
         boolean cleanExit = scheduler.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
  
+        long duration = System.currentTimeMillis()-startTime;
 
 		int j = countStages.length;
 		long messages=0;
@@ -360,17 +425,19 @@ public class PipelineTest {
 			bytes+=countStages[j].totalBytes();
 		}
 				
-		long duration = System.currentTimeMillis()-startTime;
-		if (0!=duration) {
-			assertEquals(bytes,(messages*expectedBytes));
-			
+		if (0!=duration && 0!=messages) {
+			if (expectedBytes>0) {
+				assertEquals(bytes,(messages*expectedBytes));
+			}
 			long bytesMoved = (4*RingBuffer.headPosition(ringBuffer))+bytes;
 			float mbMoved = (8f*bytesMoved)/(float)(1<<20);
+			
+			int bytesPerMessage = (int)(bytesMoved/messages);
 			
 			System.out.println("TotalMessages:"+messages + 
 					           " Msg/Ms:"+(messages/(float)duration) +
 					           " Mb/Ms:"+((mbMoved/(float)duration)) +
-					           label
+					           label +" B/Msg:"+bytesPerMessage
 							  );
 		}
 		
@@ -401,19 +468,18 @@ public class PipelineTest {
 		private volatile long count;
 		private volatile long bytes;
 		
-
-		//Runnable args = new test();
+		private final boolean testData = true;
+		
 
 		private CheckVarLengthValuesStage(GraphManager gm, RingBuffer inputRing, CheckStageArguments args) {
 			super(gm, inputRing, NONE);
 			this.inputRing = inputRing;
 			this.expectedMessageIdx = args.expectedMessageIdx();
-			this.expectedBytes = args.expectedBytes();
-			this.expectedInts = args.expectedInts();
+			this.expectedBytes = testData ? args.expectedBytes() : null;
+			this.expectedInts = testData ? args.expectedInts() :  null;
 			this.from = RingBuffer.from(inputRing);
 			this.fragSize = from.fragDataSize[expectedMessageIdx];
 			
-						
 		}
 
 		public long messageCount() {
@@ -429,59 +495,76 @@ public class PipelineTest {
 		
 		@Override
 		public void run() {
-							
-					while (RingBuffer.contentToLowLevelRead(inputRing,fragSize)) {
-						long nextTargetHead = RingBuffer.confirmLowLevelRead(inputRing, fragSize);
-				        
-						//checking the primary ints
-						if (null!=expectedInts) {
-							long primaryPos = inputRing.workingTailPos.value;
-							int j = fragSize;
-							//int[] expectedInts = new int[fragSize];
-							while (--j>=0) {
-								if (expectedInts[j] != inputRing.buffer[(int)(primaryPos+j)&inputRing.mask]) {
-								    System.err.println("failure after message "+count);
-									System.err.println(Arrays.toString(expectedInts));
-									
-									try {
-							          System.err.println( Arrays.toString(Arrays.copyOfRange(inputRing.buffer, (int)primaryPos&inputRing.mask, (int)(primaryPos+fragSize)&inputRing.mask)) );
-									} catch (Throwable t) {
-										 // ignore
-									}
-									//fail("Ints do not match at index "+j+" of "+fragSize+"   tailPos:"+RingBuffer.tailPosition(inputRing)+" byteFailurePos:"+(primaryPos+j)+" masked "+((primaryPos+j)&inputRing.mask));
-								}
-							}
-						}
-						
-			            int msgId = RingBuffer.takeMsgIdx(inputRing);
-			            			            
-			            //Instead of pulling each variable field this pulls them all at once
-			            int base = RingBuffer.bytesReadBase(inputRing);
-			            int len = inputRing.buffer[(int)((nextTargetHead - 1)&inputRing.mask)];
-					            	
-			            
-			            if (null!= expectedBytes) {
-			            	assertEquals(expectedMessageIdx, msgId);
-			            	assertEquals(expectedBytes.length, len);
-							int i = len;
-							while (--i>=0) {
-								if (expectedBytes[i] != inputRing.byteBuffer[((base+i)&inputRing.byteMask)]) {	
-									fail("String does not match at index "+i+" of "+len+"   tailPos:"+RingBuffer.tailPosition(inputRing)+" byteFailurePos:"+(base+i)+" masked "+((base+i)&inputRing.byteMask));
-								}
-							}
-			            }
-						
-						inputRing.workingTailPos.value = nextTargetHead;
-						inputRing.byteWorkingTailPos.value += len;
-						
-						releaseReadLock(inputRing);
-			            	
-			        	count++;
-			        	
-			        	bytes += len;
-		        	
-					};	
+					runTest(fragSize, inputRing, inputRing.mask, inputRing.buffer, inputRing.workingTailPos, inputRing.byteWorkingTailPos);
 	
+		}
+
+		private void runTest(int fragSize, RingBuffer inputRing, int mask, int[] buffer, PaddedLong workingTailPos, PaddedInt byteWorkingTailPos) {
+			int c = 0;		
+			int b = 0;
+			
+			while (RingBuffer.contentToLowLevelRead(inputRing,fragSize)) {
+				long nextTargetHead = RingBuffer.confirmLowLevelRead(inputRing, fragSize);
+
+				//Instead of pulling each variable field this pulls them all at once
+				int len = buffer[ (((int)nextTargetHead) - 1) & mask];
+			    
+				deepValueTesting(len);
+				
+				workingTailPos.value = nextTargetHead;
+				byteWorkingTailPos.value += len;
+				b += len;
+				c++;
+				
+				releaseReadLock(inputRing);
+			
+			};	
+			count += c;
+			bytes += b;
+		}
+
+		private void deepValueTesting(int len) {
+			//checking the primary ints
+			if (null!=expectedInts) {
+				testExpectedInts();
+			}					
+						            
+			        			            
+			if (null!= expectedBytes) {
+				testExpectedBytes(len);
+			}
+		}
+
+		private void testExpectedBytes(int len) {
+			int base = RingBuffer.bytesReadBase(inputRing);
+			int msgId = RingBuffer.takeMsgIdx(inputRing);
+			assertEquals(expectedMessageIdx, msgId);
+			assertEquals(expectedBytes.length, len);
+			int i = len;
+			while (--i>=0) {
+				if (expectedBytes[i] != inputRing.byteBuffer[((base+i)&inputRing.byteMask)]) {	
+					fail("String does not match at index "+i+" of "+len+"   tailPos:"+RingBuffer.tailPosition(inputRing)+" byteFailurePos:"+(base+i)+" masked "+((base+i)&inputRing.byteMask));
+				}
+			}
+		}
+
+		private void testExpectedInts() {
+			long primaryPos = inputRing.workingTailPos.value;
+			int j = fragSize;
+			//int[] expectedInts = new int[fragSize];
+			while (--j>=0) {
+				if (expectedInts[j] != inputRing.buffer[(int)(primaryPos+j)&inputRing.mask]) {
+				    System.err.println("failure after message "+count);
+					System.err.println(Arrays.toString(expectedInts));
+					
+					try {
+			          System.err.println( Arrays.toString(Arrays.copyOfRange(inputRing.buffer, (int)primaryPos&inputRing.mask, (int)(primaryPos+fragSize)&inputRing.mask)) );
+					} catch (Throwable t) {
+						 // ignore
+					}
+					//fail("Ints do not match at index "+j+" of "+fragSize+"   tailPos:"+RingBuffer.tailPosition(inputRing)+" byteFailurePos:"+(primaryPos+j)+" masked "+((primaryPos+j)&inputRing.mask));
+				}
+			}
 		}
 
 	}
