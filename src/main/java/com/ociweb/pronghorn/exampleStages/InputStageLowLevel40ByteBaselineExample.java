@@ -2,6 +2,9 @@ package com.ociweb.pronghorn.exampleStages;
 
 import static com.ociweb.pronghorn.ring.RingBuffer.*;
 
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;
 import com.ociweb.pronghorn.stage.PronghornStage;

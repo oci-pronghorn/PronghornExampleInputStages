@@ -31,7 +31,7 @@ public class PipelineTest {
 	static final long TEST_LENGTH_IN_SECONDS = 7;
 	
 	private static FieldReferenceOffsetManager from;
-	public static final int messagesOnRing = 1024;
+	public static final int messagesOnRing = 1<<10;
 	public static final int monitorMessagesOnRing = 7;
 	
 	private static final int maxLengthVarField = 40;
@@ -92,38 +92,14 @@ public class PipelineTest {
 	   		 
 	   	 };
 				
+	   	GraphManager gm = new GraphManager();
 		
-		RingBuffer ringBuffer = new RingBuffer(ringBufferConfig);
-		RingBuffer ringBuffer21 = new RingBuffer(ringBufferConfig.grow2x());
-		RingBuffer ringBuffer211 = new RingBuffer(ringBufferConfig);
-		RingBuffer ringBuffer212 = new RingBuffer(ringBufferConfig);
-		RingBuffer ringBuffer22 = new RingBuffer(ringBufferConfig.grow2x());
-		RingBuffer ringBuffer221 = new RingBuffer(ringBufferConfig);
-		RingBuffer ringBuffer222 = new RingBuffer(ringBufferConfig);
+		SplitterStage stage = buildSplitterTree(checkArgs, gm);
+		
+		InputStageLowLevelExample producer = new InputStageLowLevelExample(gm, GraphManager.getInputRing(gm, stage, 1));
+				
 
-		
-   	    GraphManager gm = new GraphManager();
-
-		InputStageLowLevelExample  iso = new InputStageLowLevelExample(gm, ringBuffer); //full queue
-		
-		//simple stage that reports to the console
-	   
-		SplitterStage stage = new SplitterStage(gm, ringBuffer, ringBuffer21, ringBuffer22);	//mostly full queue
-		
-		RoundRobinRouteStage router21 = new RoundRobinRouteStage(gm, ringBuffer21, ringBuffer211, ringBuffer212); //mostly empty
-		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, ringBuffer211, checkArgs);
-		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, ringBuffer212, checkArgs);
-					
-		RoundRobinRouteStage router22 = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222); //mostly empty
-		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, checkArgs);
-		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, checkArgs);
-		
-		//add arguments object with keys/values
-		//classic  Object[] args
-		//ring     RingBuffer args with schema, Immmutable read many ? this would give us primitives in order with one object.
-		//     T t   H h   roll back and re-read?
-		// use simple interface that we can wrap around a ring buffer or something else.
-		// eventProducer? streamingVisitor?    StageArgProducer
+		//If we can ask for stages by some id then we can look them up at the end as needed.
 		
 		
 		//Add monitoring
@@ -131,12 +107,41 @@ public class PipelineTest {
 		
 		//Enable batching
 		GraphManager.enableBatching(gm);
-				
+
 		
-		long totalMessages = timeAndRunTest(ringBuffer22, gm, expected.length, " low level", dumpStage21, dumpStage22);
-		long expectedMessages = dumpStage11.messageCount() + dumpStage12.messageCount();
-		assertEquals(expectedMessages,totalMessages);
+		RingBuffer ringForDataCount = GraphManager.getInputRing(gm, GraphManager.findStageByPath(gm, 1, 1, 2), 1);
+		long totalMessages = timeAndRunTest(ringForDataCount, gm, expected.length, " low level", 
+				                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 2, 1), 
+				                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 2, 2));
+		assertEquals(((CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 1, 1)).messageCount() + 
+				     ((CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 1, 2)).messageCount(), 
+				     totalMessages);
 		
+	}
+
+
+	private SplitterStage buildSplitterTree(CheckStageArguments checkArgs,	GraphManager gm) {
+		
+		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, new RingBuffer(ringBufferConfig), checkArgs);
+		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, new RingBuffer(ringBufferConfig), checkArgs);		
+		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, new RingBuffer(ringBufferConfig), checkArgs);
+		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, new RingBuffer(ringBufferConfig), checkArgs);	
+		
+		RoundRobinRouteStage router21 = new RoundRobinRouteStage(gm, 
+				                                                 new RingBuffer(ringBufferConfig.grow2x()), 
+				                                                 GraphManager.getInputRing(gm, dumpStage11), 
+				                                                 GraphManager.getInputRing(gm, dumpStage12)); 	
+		
+		RoundRobinRouteStage router22 = new RoundRobinRouteStage(gm, 
+				                                                 new RingBuffer(ringBufferConfig.grow2x()),																	
+																 GraphManager.getInputRing(gm, dumpStage21),
+																 GraphManager.getInputRing(gm, dumpStage22)); 
+        
+		SplitterStage stage = new SplitterStage(gm, 
+				                                new RingBuffer(ringBufferConfig), 
+												GraphManager.getInputRing(gm, router21),
+												GraphManager.getInputRing(gm, router22));
+		return stage;
 	}
 	
 	
@@ -188,16 +193,15 @@ public class PipelineTest {
 		RingBufferConfig config = new RingBufferConfig(FieldReferenceOffsetManager.RAW_BYTES, 1<<14, 50);
 				
 		
-		RingBuffer ringBuffer = new RingBuffer(config);
-		RingBuffer ringBuffer21 = new RingBuffer(config.grow2x().grow2x()); //TODO: this is showing round robin to be a problem.
-		RingBuffer ringBuffer211 = new RingBuffer(config);
-		RingBuffer ringBuffer212 = new RingBuffer(config);
-		RingBuffer ringBuffer22 = new RingBuffer(config.grow2x().grow2x());
-		RingBuffer ringBuffer221 = new RingBuffer(config);
-		RingBuffer ringBuffer222 = new RingBuffer(config);
-
-		
    	    GraphManager gm = new GraphManager();
+   	    
+   	    RingBuffer ringBuffer = new RingBuffer(config);
+   	    RingBuffer ringBuffer21 = new RingBuffer(config.grow2x().grow2x()); //TODO: this is showing round robin to be a problem.
+   	    RingBuffer ringBuffer211 = new RingBuffer(config);
+   	    RingBuffer ringBuffer212 = new RingBuffer(config);
+   	    RingBuffer ringBuffer22 = new RingBuffer(config.grow2x().grow2x());
+   	    RingBuffer ringBuffer221 = new RingBuffer(config);
+   	    RingBuffer ringBuffer222 = new RingBuffer(config);
 
         InputStageLowLevel40ByteBaselineExample  iso = new InputStageLowLevel40ByteBaselineExample(gm, ringBuffer); //full queue
 		
@@ -261,12 +265,6 @@ public class PipelineTest {
 		RingBuffer ringBuffer221 = new RingBuffer(ringBufferConfig);
 		RingBuffer ringBuffer222 = new RingBuffer(ringBufferConfig);
 		
-		//Just to confirm that we are starting at zero before running the test.
-		assertEquals(0, RingBuffer.headPosition(ringBuffer));
-		assertEquals(0, RingBuffer.bytesHeadPosition(ringBuffer));
-		assertEquals(0, RingBuffer.headPosition(ringBuffer21));
-		assertEquals(0, RingBuffer.bytesHeadPosition(ringBuffer21));
-		
 		
    	    GraphManager gm = new GraphManager();
 		
@@ -327,32 +325,10 @@ public class PipelineTest {
 	public void eventConsumerInputStageTest() {
 								
 	
-		RingBuffer ringBuffer = new RingBuffer(ringBufferConfig);
-		RingBuffer ringBuffer21 = new RingBuffer(ringBufferConfig.grow2x());
-		RingBuffer ringBuffer211 = new RingBuffer(ringBufferConfig);
-		RingBuffer ringBuffer212 = new RingBuffer(ringBufferConfig);
-		RingBuffer ringBuffer22 = new RingBuffer(ringBufferConfig.grow2x());
-		RingBuffer ringBuffer221 = new RingBuffer(ringBufferConfig);
-		RingBuffer ringBuffer222 = new RingBuffer(ringBufferConfig);
-		
-		//Just to confirm that we are starting at zero before running the test.
-		assertEquals(0, RingBuffer.headPosition(ringBuffer));
-		assertEquals(0, RingBuffer.bytesHeadPosition(ringBuffer));
-		assertEquals(0, RingBuffer.headPosition(ringBuffer21));
-		assertEquals(0, RingBuffer.bytesHeadPosition(ringBuffer21));
-		
-		
-   	    GraphManager gm = new GraphManager();
-   	    				
-        final InputStageEventConsumerExample  iso = new InputStageEventConsumerExample(gm, ringBuffer);
-			   
-		
-		SplitterStage stage = new SplitterStage(gm,ringBuffer, ringBuffer21, ringBuffer22);
-		
 		
 		CheckStageArguments checkArgs = new CheckStageArguments() {
 			//	build the expected data that should be found on the byte ring.
-			final byte[] expected = (iso.testSymbol+iso.testCompanyName).getBytes();
+			final byte[] expected = (InputStageEventConsumerExample.testSymbol+InputStageEventConsumerExample.testCompanyName).getBytes();
 			int expectedMsg = from.messageStarts[1];   	    
 			final int[] expectedInts = new int[] {8, 0, 3, 3, 31, 0, 0, 2, 0, 2343, 2, 0, 8000, 2, 0, 2000, 2, 0, 7230, 0, 10000000, 34};
 			//simple stage that reports to the console
@@ -373,25 +349,32 @@ public class PipelineTest {
 			}
 			
 		};
+		int expectedBytes = InputStageEventConsumerExample.testSymbol.length() + InputStageEventConsumerExample.testCompanyName.length();
+
 		
-		int expectedBytes = iso.testSymbol.length() + iso.testCompanyName.length();
-						
-		RoundRobinRouteStage router21 = new RoundRobinRouteStage(gm, ringBuffer21, ringBuffer211, ringBuffer212);
-		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, ringBuffer211, checkArgs);
-		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, ringBuffer212, checkArgs);
-					
-		RoundRobinRouteStage router22 = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222);
-		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, checkArgs);
-		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, checkArgs);
+		GraphManager gm = new GraphManager();
 		
+		SplitterStage stage = buildSplitterTree(checkArgs, gm);
+		
+		InputStageEventConsumerExample producer = new InputStageEventConsumerExample(gm, GraphManager.getInputRing(gm, stage, 1));
+				
+		
+		//Add monitoring
 		MonitorConsoleStage.attach(gm, monitorRate, ringBufferMonitorConfig);
 		
 		//Enable batching
 		GraphManager.enableBatching(gm);
+
 		
-		long totalMessages = timeAndRunTest(ringBuffer22, gm, expectedBytes, " EventConsumer", dumpStage21, dumpStage22);   
-	    long expectedMessages = dumpStage11.messageCount() + dumpStage12.messageCount();
-	    assertEquals(expectedMessages,totalMessages);
+		RingBuffer ringForDataCount = GraphManager.getInputRing(gm, GraphManager.findStageByPath(gm, 1, 1, 2), 1);
+		long totalMessages = timeAndRunTest(ringForDataCount, gm, expectedBytes, " event consumer", 
+				                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 2, 1), 
+				                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 2, 2));
+		assertEquals(((CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 1, 1)).messageCount() + 
+				     ((CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 1, 2)).messageCount(), 
+				     totalMessages);
+		
+		
 	}
 	
 
