@@ -25,7 +25,18 @@ public class InputStageLowLevel40ByteBaselineExample extends PronghornStage {
 		
 	private int fragToWrite;
 	
-	public byte[] payload;
+	public static byte[] payload;
+	
+	static {
+		int size = 28;//4096;//2048;//1024;//512;//256;//128;//64;//40;//32;//40-8;//do not count len and pos  TODO: AA, try other values 16, 32 and 64
+		
+		payload = new byte[size];
+		int i = size;
+		while (--i>=0) {
+			payload[i]=(byte)i;
+		}
+		
+	}
 	
 	/**
 	 * This is an example of a input stage that uses the low level API.  This is the most difficult to use API for 
@@ -99,14 +110,7 @@ public class InputStageLowLevel40ByteBaselineExample extends PronghornStage {
 			//PUT YOUR LOGIC HERE FOR CONNTECTING TO THE DATABASE OR OTHER SOURCE OF INFORMATION
 			//////
 			
-			int size = 40-8;//do not count len and pos
-			
-			payload = new byte[size];
-			int i = size;
-			while (--i>=0) {
-				payload[i]=(byte)i;
-			}
-			
+
 			
 					
 		} catch (Throwable t) {

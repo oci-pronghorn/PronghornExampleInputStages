@@ -28,10 +28,10 @@ import com.ociweb.pronghorn.stage.scheduling.ThreadPerStageScheduler;
 public class PipelineTest {
 
 	static final long TIMEOUT_SECONDS = 3;
-	static final long TEST_LENGTH_IN_SECONDS = 7;
+	static final long TEST_LENGTH_IN_SECONDS = 11;
 	
 	private static FieldReferenceOffsetManager from;
-	public static final int messagesOnRing = 1<<10;
+	public static final int messagesOnRing = 1<<15;
 	public static final int monitorMessagesOnRing = 7;
 	
 	private static final int maxLengthVarField = 40;
@@ -110,7 +110,7 @@ public class PipelineTest {
 
 		
 		RingBuffer ringForDataCount = GraphManager.getInputRing(gm, GraphManager.findStageByPath(gm, 1, 1, 2), 1);
-		long totalMessages = timeAndRunTest(ringForDataCount, gm, expected.length, " low level", 
+		long totalMessages = timeAndRunTest(ringForDataCount, gm, expected.length, " low level", TEST_LENGTH_IN_SECONDS, 
 				                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 2, 1), 
 				                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 2, 2));
 		assertEquals(((CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 1, 1)).messageCount() + 
@@ -148,16 +148,16 @@ public class PipelineTest {
 	@Test
 	public void lowLevelInputStageSimple40Test() {
 							
-		RingBufferConfig config = new RingBufferConfig(FieldReferenceOffsetManager.RAW_BYTES, 1<<14, 50);
-		RingBuffer ringBuffer = new RingBuffer(config);
+		RingBufferConfig config = new RingBufferConfig(FieldReferenceOffsetManager.RAW_BYTES, messagesOnRing, InputStageLowLevel40ByteBaselineExample.payload.length);
+		RingBuffer ringBuffer1 = new RingBuffer(config);
+		//RingBuffer ringBuffer21 = new RingBuffer(config);
+		//RingBuffer ringBuffer22 = new RingBuffer(config);
 		
 		
-   	    GraphManager gm = new GraphManager();
    	    	
 		
-		InputStageLowLevel40ByteBaselineExample  iso = new InputStageLowLevel40ByteBaselineExample(gm, ringBuffer); //full queue
 
-		final byte[] expectedBytes = iso.payload;
+		final byte[] expectedBytes = InputStageLowLevel40ByteBaselineExample.payload;
 		
 		
 		CheckStageArguments checkArgs = new CheckStageArguments() {
@@ -174,16 +174,22 @@ public class PipelineTest {
 			
 			@Override
 			public int[] expectedInts() {
-				return new int[]{0,0,32};
+				return new int[]{0,0,InputStageLowLevel40ByteBaselineExample.payload.length};
 			}
 			
 		};
+				
+		GraphManager gm = new GraphManager();
+		InputStageLowLevel40ByteBaselineExample  iso = new InputStageLowLevel40ByteBaselineExample(gm, ringBuffer1); //full queue
+//		RoundRobinRouteStage router22 = new RoundRobinRouteStage(gm, ringBuffer1, ringBuffer21, ringBuffer22); 
+//		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer21, checkArgs);
+//		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer22, checkArgs);
 		
-		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer, checkArgs);
+		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer1, checkArgs);
 		
 		GraphManager.enableBatching(gm);
 		
-		timeAndRunTest(ringBuffer, gm, 0, " Simple40LowLevel", dumpStage22);   
+		timeAndRunTest(ringBuffer1, gm, 0, " Simple40LowLevel", TEST_LENGTH_IN_SECONDS, dumpStage22);//, dumpStage21);   
 		
 	}
 	
@@ -203,9 +209,8 @@ public class PipelineTest {
    	    RingBuffer ringBuffer221 = new RingBuffer(config);
    	    RingBuffer ringBuffer222 = new RingBuffer(config);
 
-        InputStageLowLevel40ByteBaselineExample  iso = new InputStageLowLevel40ByteBaselineExample(gm, ringBuffer); //full queue
 		
-		final byte[] expectedBytes = iso.payload;
+		final byte[] expectedBytes = InputStageLowLevel40ByteBaselineExample.payload;
 		
 		
 		CheckStageArguments checkArgs = new CheckStageArguments() {
@@ -222,13 +227,14 @@ public class PipelineTest {
 			
 			@Override
 			public int[] expectedInts() {
-				return new int[]{0,0,32};
+				return new int[]{0,0,InputStageLowLevel40ByteBaselineExample.payload.length};
 			}
 			
 		};
         
         
 		//simple stage that reports to the console
+		InputStageLowLevel40ByteBaselineExample  iso = new InputStageLowLevel40ByteBaselineExample(gm, ringBuffer); //full queue
 	   
 		SplitterStage stage = new SplitterStage(gm, ringBuffer, ringBuffer21, ringBuffer22);	//mostly full queue
 		
@@ -247,7 +253,7 @@ public class PipelineTest {
 		GraphManager.enableBatching(gm);
 				
 		
-		long totalMessages = timeAndRunTest(ringBuffer22, gm, 0, " low level 40 ", dumpStage21, dumpStage22);
+		long totalMessages = timeAndRunTest(ringBuffer22, gm, 0, " low level 40 ", TEST_LENGTH_IN_SECONDS, dumpStage21, dumpStage22);
 		long expectedMessages = dumpStage11.messageCount() + dumpStage12.messageCount();
 		assertEquals(expectedMessages,totalMessages);
 		
@@ -256,22 +262,10 @@ public class PipelineTest {
 	
 	@Test
 	public void highLevelInputStageTest() {								
-	
-		RingBuffer ringBuffer = new RingBuffer(ringBufferConfig);
-		RingBuffer ringBuffer21 = new RingBuffer(ringBufferConfig.grow2x());
-		RingBuffer ringBuffer211 = new RingBuffer(ringBufferConfig);
-		RingBuffer ringBuffer212 = new RingBuffer(ringBufferConfig);
-		RingBuffer ringBuffer22 = new RingBuffer(ringBufferConfig.grow2x());
-		RingBuffer ringBuffer221 = new RingBuffer(ringBufferConfig);
-		RingBuffer ringBuffer222 = new RingBuffer(ringBufferConfig);
-		
-		
-   	    GraphManager gm = new GraphManager();
-		
-   	    InputStageHighLevelExample  iso = new InputStageHighLevelExample(gm, ringBuffer);
+
 		
    	    //	build the expected data that should be found on the byte ring.
-   	    final byte[] expected = (iso.testSymbol+iso.testCompanyName).getBytes();
+   	    final byte[] expected = (InputStageHighLevelExample.testSymbol+InputStageHighLevelExample.testCompanyName).getBytes();
    	    final int expectedMsg = from.messageStarts[1];
    	    final int[] expectedInts =  new int[] {8, 0, 3, 3, 31, 0, 0, 2, 0, 10250, 2, 0, 10250, 2, 0, 10250, 2, 0, 10250, 0, 10000000, 34};
 		
@@ -293,29 +287,28 @@ public class PipelineTest {
 			}
 	   		 
 	   	 };
-   	    
-   	    //simple stage that reports to the console
-	   
-		SplitterStage stage = new SplitterStage(gm,ringBuffer, ringBuffer21, ringBuffer22);	
-
-		RoundRobinRouteStage router21 = new RoundRobinRouteStage(gm, ringBuffer21, ringBuffer211, ringBuffer212);
-		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, ringBuffer211, checkArgs);
-		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, ringBuffer212, checkArgs);
+	   	 
+	   	 GraphManager gm = new GraphManager();
+	   	 
+			SplitterStage stage = buildSplitterTree(checkArgs, gm);
+			
+			InputStageHighLevelExample producer = new InputStageHighLevelExample(gm, GraphManager.getInputRing(gm, stage, 1));
 					
-		RoundRobinRouteStage router22 = new RoundRobinRouteStage(gm, ringBuffer22, ringBuffer221, ringBuffer222);
-		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, ringBuffer221, checkArgs);
-		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer222, checkArgs);
+			
+			//Add monitoring
+			MonitorConsoleStage.attach(gm, monitorRate, ringBufferMonitorConfig);
+			
+			//Enable batching
+			GraphManager.enableBatching(gm);
 
-		//Turn on monitoring
-		MonitorConsoleStage.attach(gm, monitorRate, ringBufferMonitorConfig);
-		
-		//Enable batching
-		GraphManager.enableBatching(gm);
-		
-		
-	    long totalMessages = timeAndRunTest(ringBuffer22, gm, expected.length, " HighLevel", dumpStage21, dumpStage22);   
-	    long expectedMessages = dumpStage11.messageCount() + dumpStage12.messageCount();
-	    assertEquals(expectedMessages,totalMessages);
+			
+			RingBuffer ringForDataCount = GraphManager.getInputRing(gm, GraphManager.findStageByPath(gm, 1, 1, 2), 1);
+			long totalMessages = timeAndRunTest(ringForDataCount, gm, expected.length, " high level", TEST_LENGTH_IN_SECONDS, 
+					                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 2, 1), 
+					                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 2, 2));
+			assertEquals(((CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 1, 1)).messageCount() + 
+					     ((CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 1, 2)).messageCount(), 
+					     totalMessages);
 		
 	}
 
@@ -367,7 +360,7 @@ public class PipelineTest {
 
 		
 		RingBuffer ringForDataCount = GraphManager.getInputRing(gm, GraphManager.findStageByPath(gm, 1, 1, 2), 1);
-		long totalMessages = timeAndRunTest(ringForDataCount, gm, expectedBytes, " event consumer", 
+		long totalMessages = timeAndRunTest(ringForDataCount, gm, expectedBytes, " event consumer", TEST_LENGTH_IN_SECONDS, 
 				                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 2, 1), 
 				                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 2, 2));
 		assertEquals(((CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 1, 1)).messageCount() + 
@@ -379,14 +372,14 @@ public class PipelineTest {
 	
 
 	private long timeAndRunTest(RingBuffer ringBuffer, GraphManager gm,
-			final int expectedBytes, String label, CheckVarLengthValuesStage ... countStages) {
+			final int expectedBytes, String label, long testInSeconds, CheckVarLengthValuesStage ... countStages) {
 		StageScheduler scheduler = new ThreadPerStageScheduler(GraphManager.cloneAll(gm));
 		 
 	    long startTime = System.currentTimeMillis();
 		scheduler.startup();
 
 		try {
-			Thread.sleep(TEST_LENGTH_IN_SECONDS*1000);
+			Thread.sleep(testInSeconds*1000);
 		} catch (InterruptedException e) {
 		}
 		
@@ -407,19 +400,23 @@ public class PipelineTest {
 			messages+=countStages[j].messageCount();
 			bytes+=countStages[j].totalBytes();
 		}
-				
-		if (0!=duration && 0!=messages) {
-			if (expectedBytes>0) {
-				assertEquals(bytes,(messages*expectedBytes));
+		
+		if ((duration>0) && (messages>0)) {
+			if (expectedBytes>0 && bytes!=(messages*expectedBytes) ) {
+				fail("Unexpected total byte count");
 			}
-			long bytesMoved = (4*RingBuffer.headPosition(ringBuffer))+bytes;
+			long bytesMoved = (4l*RingBuffer.headPosition(ringBuffer))+bytes;
+			
+			
 			float mbMoved = (8f*bytesMoved)/(float)(1<<20);
 			
 			int bytesPerMessage = (int)(bytesMoved/messages);
 			
+			float fmsg = messages;
+			float fdur = duration;
 			System.out.println("TotalMessages:"+messages + 
-					           " Msg/Ms:"+(messages/(float)duration) +
-					           " Mb/Ms:"+((mbMoved/(float)duration)) +
+					           " Msg/Ms:"+(fmsg/fdur) +
+					           " Mb/Ms:"+(mbMoved/fdur) +
 					           label +" B/Msg:"+bytesPerMessage
 							  );
 		}
@@ -478,32 +475,41 @@ public class PipelineTest {
 		
 		@Override
 		public void run() {
-					runTest(fragSize, inputRing, inputRing.mask, inputRing.buffer, inputRing.workingTailPos, inputRing.byteWorkingTailPos);
+					if (RingBuffer.contentToLowLevelRead(inputRing,fragSize)) {
+						runTest2(fragSize, inputRing, inputRing.mask, inputRing.buffer, inputRing.workingTailPos,	inputRing.byteWorkingTailPos);
+					}
 	
 		}
 
-		private void runTest(int fragSize, RingBuffer inputRing, int mask, int[] buffer, PaddedLong workingTailPos, PaddedInt byteWorkingTailPos) {
-			int c = 0;		
-			int b = 0;
-			
-			while (RingBuffer.contentToLowLevelRead(inputRing,fragSize)) {
-				long nextTargetHead = RingBuffer.confirmLowLevelRead(inputRing, fragSize);
+		private void runTest2(int fragSize, RingBuffer inputRing, int mask,
+				int[] buffer, PaddedLong workingTailPos, PaddedInt byteWorkingTailPos) {
+			long c = 0;		
+			long b = 0;
+			do {
+				bytes = bytes + consumeMessage(fragSize, inputRing, mask, buffer,	workingTailPos, byteWorkingTailPos);
+				count = count + 1;					
+			} while (RingBuffer.contentToLowLevelRead(inputRing,fragSize));	
 
-				//Instead of pulling each variable field this pulls them all at once
-				int len = buffer[ (((int)nextTargetHead) - 1) & mask];
-			    
-				deepValueTesting(len);
-				
-				workingTailPos.value = nextTargetHead;
-				byteWorkingTailPos.value += len;
-				b += len;
-				c++;
-				
-				releaseReadLock(inputRing);
-			
-			};	
 			count += c;
 			bytes += b;
+		}
+
+		private long consumeMessage(int fragSize, RingBuffer inputRing,
+				int mask, int[] buffer, PaddedLong workingTailPos,
+				PaddedInt byteWorkingTailPos) {
+			long nextTargetHead = RingBuffer.confirmLowLevelRead(inputRing, fragSize);
+
+			//Instead of pulling each variable field this pulls them all at once
+			int len = buffer[ (((int)nextTargetHead) - 1) & mask];
+			
+			deepValueTesting(len);
+			releaseReadLock(inputRing);
+			
+			workingTailPos.value = nextTargetHead;
+			byteWorkingTailPos.value =  RingBuffer.BYTES_WRAP_MASK&(byteWorkingTailPos.value + len);
+			
+						
+			return len;
 		}
 
 		private void deepValueTesting(int len) {
@@ -521,14 +527,30 @@ public class PipelineTest {
 		private void testExpectedBytes(int len) {
 			int base = RingBuffer.bytesReadBase(inputRing);
 			int msgId = RingBuffer.takeMsgIdx(inputRing);
-			assertEquals(expectedMessageIdx, msgId);
-			assertEquals(expectedBytes.length, len);
+			if (expectedMessageIdx!=msgId) {
+				messageCountMismatch(msgId);
+			}
+			if (expectedBytes.length!=len) {
+				byteLengthMismatch(len);
+			}
 			int i = len;
 			while (--i>=0) {
 				if (expectedBytes[i] != inputRing.byteBuffer[((base+i)&inputRing.byteMask)]) {	
-					fail("String does not match at index "+i+" of "+len+"   tailPos:"+RingBuffer.tailPosition(inputRing)+" byteFailurePos:"+(base+i)+" masked "+((base+i)&inputRing.byteMask));
+					showByteError(len, base, i);
 				}
 			}
+		}
+
+		private void messageCountMismatch(int msgId) {
+			fail("did not expect message id of "+msgId);
+		}
+
+		private void byteLengthMismatch(int len) {
+			fail("did not expect byte length of "+len);
+		}
+
+		private void showByteError(int len, int base, int i) {
+			fail("String does not match at index "+i+" of "+len+"   tailPos:"+RingBuffer.tailPosition(inputRing)+" byteFailurePos:"+(base+i)+" masked "+((base+i)&inputRing.byteMask));
 		}
 
 		private void testExpectedInts() {
@@ -537,17 +559,21 @@ public class PipelineTest {
 			//int[] expectedInts = new int[fragSize];
 			while (--j>=0) {
 				if (expectedInts[j] != inputRing.buffer[(int)(primaryPos+j)&inputRing.mask]) {
-				    System.err.println("failure after message "+count);
-					System.err.println(Arrays.toString(expectedInts));
-					
-					try {
-			          System.err.println( Arrays.toString(Arrays.copyOfRange(inputRing.buffer, (int)primaryPos&inputRing.mask, (int)(primaryPos+fragSize)&inputRing.mask)) );
-					} catch (Throwable t) {
-						 // ignore
-					}
-					//fail("Ints do not match at index "+j+" of "+fragSize+"   tailPos:"+RingBuffer.tailPosition(inputRing)+" byteFailurePos:"+(primaryPos+j)+" masked "+((primaryPos+j)&inputRing.mask));
+				    showIntError(primaryPos);
 				}
 			}
+		}
+
+		private void showIntError(long primaryPos) {
+			System.err.println("failure after message "+count);
+			System.err.println(Arrays.toString(expectedInts));
+			
+			try {
+			  System.err.println( Arrays.toString(Arrays.copyOfRange(inputRing.buffer, (int)primaryPos&inputRing.mask, (int)(primaryPos+fragSize)&inputRing.mask)) );
+			} catch (Throwable t) {
+				 // ignore
+			}
+			//fail("Ints do not match at index "+j+" of "+fragSize+"   tailPos:"+RingBuffer.tailPosition(inputRing)+" byteFailurePos:"+(primaryPos+j)+" masked "+((primaryPos+j)&inputRing.mask));
 		}
 
 	}
