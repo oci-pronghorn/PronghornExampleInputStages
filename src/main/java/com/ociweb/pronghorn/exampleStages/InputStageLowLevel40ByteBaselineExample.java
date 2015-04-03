@@ -95,7 +95,9 @@ public class InputStageLowLevel40ByteBaselineExample extends PronghornStage {
 		//if not we should throw now to stop the construction early
 		///////////
 		
-		assert(from==FieldReferenceOffsetManager.RAW_BYTES);
+		if (from!=FieldReferenceOffsetManager.RAW_BYTES) {
+			throw new UnsupportedOperationException();
+		}
 	}
 		
 	
