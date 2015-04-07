@@ -136,8 +136,9 @@ public class InputStageLowLevel40ByteBaselineExample extends PronghornStage {
 		///////
 		int requiredSize = sizeOfFragment; //this can be set to the largest of the union of possible messages.
 		
+		int maxBlock = 100;
 
-		if (roomToLowLevelWrite(output, requiredSize) ) {
+		while (--maxBlock>0 && roomToLowLevelWrite(output, requiredSize) ) {
 			int consumedSize = 0;
 			
 			//////

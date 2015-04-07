@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.Assert.*;
 
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;
@@ -321,6 +322,7 @@ public class PipelineTest {
 		scheduler.shutdown();
 		
         boolean cleanExit = scheduler.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+  
  
         long duration = System.currentTimeMillis()-startTime;
 
@@ -345,7 +347,7 @@ public class PipelineTest {
 			System.out.println("TotalMessages:"+messages + 
 					           " Msg/Ms:"+(fmsg/fdur) +
 					           " Mb/Ms:"+(mbMoved/fdur) +
-					           label +" B/Msg:"+bytesPerMessage
+					           label +" B/Msg:"+bytesPerMessage +" cleanExit:"+cleanExit
 							  );
 		} else {
 			System.out.println(label+" warning duration:"+duration+" messages:"+messages);

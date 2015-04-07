@@ -49,8 +49,6 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 		return bytes;
 	}
 
-	//TODO: build a standard java blocking Queue example as a point of comparison.
-	//      Must know if event consumer is faster or slower.
 	
 	@Override
 	public void run() {
