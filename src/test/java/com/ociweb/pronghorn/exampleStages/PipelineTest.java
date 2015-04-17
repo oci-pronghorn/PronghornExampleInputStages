@@ -89,7 +89,7 @@ public class PipelineTest {
 		
 		PronghornStage stage = buildSplitterTree(checkArgs, gm, ringBufferConfig, false);
 		
-		InputStageLowLevelExample producer = new InputStageLowLevelExample(gm, GraphManager.getInputRing(gm, stage, 1));
+		InputStageLowLevelExample producer = new InputStageLowLevelExample(gm, GraphManager.getInputPipe(gm, stage, 1));
 				
 
 		//If we can ask for stages by some id then we can look them up at the end as needed.
@@ -108,7 +108,7 @@ public class PipelineTest {
 		GraphManager.enableBatching(gm);
 
 		
-		RingBuffer ringForDataCount = GraphManager.getInputRing(gm, GraphManager.findStageByPath(gm, 1, 1, 2), 1);
+		RingBuffer ringForDataCount = GraphManager.getInputPipe(gm, GraphManager.findStageByPath(gm, 1, 1, 2), 1);
 		timeAndRunTest(ringForDataCount, gm, label, TEST_LENGTH_IN_SECONDS, (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 1), 
 				                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 2), 
 				                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 3),
@@ -126,10 +126,10 @@ public class PipelineTest {
 		
 		RoundRobinRouteStage stage = new RoundRobinRouteStage(gm, 
 				                                                 new RingBuffer(config.grow2x()), 
-				                                                 GraphManager.getInputRing(gm, dumpStage11), 
-				                                                 GraphManager.getInputRing(gm, dumpStage12),
-				                                                 GraphManager.getInputRing(gm, dumpStage21),
-																 GraphManager.getInputRing(gm, dumpStage22)				
+				                                                 GraphManager.getInputPipe(gm, dumpStage11), 
+				                                                 GraphManager.getInputPipe(gm, dumpStage12),
+				                                                 GraphManager.getInputPipe(gm, dumpStage21),
+																 GraphManager.getInputPipe(gm, dumpStage22)				
 																); 	
 
 		return stage;
@@ -208,7 +208,7 @@ public class PipelineTest {
 		
 		
 		PronghornStage stage = buildSplitterTree(checkArgs, gm, config, true);
-       InputStageLowLevel40ByteBaselineExample producer = new InputStageLowLevel40ByteBaselineExample(gm, GraphManager.getInputRing(gm, stage, 1));
+       InputStageLowLevel40ByteBaselineExample producer = new InputStageLowLevel40ByteBaselineExample(gm, GraphManager.getInputPipe(gm, stage, 1));
 				
 		
        addMonitorAndTest(gm, 0, " low level 40 ");
@@ -248,7 +248,7 @@ public class PipelineTest {
 	   	 
 	   	PronghornStage stage = buildSplitterTree(checkArgs, gm, ringBufferConfig, true);
 			
-			InputStageHighLevelExample producer = new InputStageHighLevelExample(gm, GraphManager.getInputRing(gm, stage, 1));
+			InputStageHighLevelExample producer = new InputStageHighLevelExample(gm, GraphManager.getInputPipe(gm, stage, 1));
 					
 			addMonitorAndTest(gm, 0, " high level ");
 		
@@ -293,7 +293,7 @@ public class PipelineTest {
 		
 		PronghornStage stage = buildSplitterTree(checkArgs, gm, ringBufferConfig, true);
 		
-		InputStageEventConsumerExample producer = new InputStageEventConsumerExample(gm, GraphManager.getInputRing(gm, stage, 1));
+		InputStageEventConsumerExample producer = new InputStageEventConsumerExample(gm, GraphManager.getInputPipe(gm, stage, 1));
 				
 		
 		addMonitorAndTest(gm, 0, " event consumer ");
