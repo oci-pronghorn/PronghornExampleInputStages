@@ -88,9 +88,8 @@ public class InputStageHighLevelExample extends PronghornStage {
 	@Override
 	public void run() {
 		
-		int msgId = dailyMessageIdx;
-		
-		if (tryWriteFragment(output, msgId)) {
+	    int count=100;
+		while (--count>=0 && tryWriteFragment(output, dailyMessageIdx)) {
 			
 			
 			//When using this API the type of the field must match the type of method used

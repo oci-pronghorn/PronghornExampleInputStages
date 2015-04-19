@@ -18,11 +18,16 @@ public class InputStageLowLevelExample extends PronghornStage {
 	
 	
 	private int fragToWrite;
-	private String serverURI = "tcp://localhost:1883";
-	private String clientId = "thingFortytwo";
-	private int    clientIdIndex = 42;	
-	private String topic = "root/colors/blue";
-	private byte[] payload = new byte[]{0,1,2,3,4,5,6,7};
+	private final String serverURI = "tcp://localhost:1883";
+	private final String clientId = "thingFortytwo";
+	private final int    clientIdIndex = 42;	
+	private final String topic = "root/colors/blue";
+	private final byte[] payload = new byte[]{0,1,2,3,4,5,6,7};
+	private final int serverURILength = serverURI.length();
+	private final int clientIdLength = clientId.length();
+	private final int topicLength = topic.length();
+	private final int payloadLength = payload.length;
+	
 	
 	/**
 	 * This is an example of a input stage that uses the low level API.  This is the most difficult to use API for 
@@ -92,7 +97,6 @@ public class InputStageLowLevelExample extends PronghornStage {
 	
 	@Override
 	public void startup() {
-		super.startup();
 		try{
 			//setup the output ring for low level writing			
 			initLowLevelWriter(output); //TODO: AA, working to remove this.
@@ -122,12 +126,9 @@ public class InputStageLowLevelExample extends PronghornStage {
 		//Instead of hard coding these to at this point you would check with the input to determine what message should be sent
 		//unless this source only produces one kind of message 
 		///////
-		int requiredSize = sizeOfFragment; //this can be set to the largest of the union of possible messages.
-		
+	    int count = 100;//only do this many at a time to allow for shudown
+		while (--count>=0 && roomToLowLevelWrite(output, sizeOfFragment) ) {
 
-		if (roomToLowLevelWrite(output, requiredSize) ) {
-			int consumedSize = 0;
-			
 			//////
 			//gather all the data to be written
 			//nothing to do for this example because we are using constants
@@ -142,31 +143,14 @@ public class InputStageLowLevelExample extends PronghornStage {
 			//     **  Every fragment must end with publishWrites
 			
 			//when starting a new message this method must be used to record the message template id, and do internal housekeeping
-			addMsgIdx(output, fragToWrite);					
-						
-			addASCII(serverURI, 0, serverURI.length(), output); //serverURI
-			addUTF8(clientId, 0, clientId.length(), output); //clientId			
-			addIntValue(clientIdIndex, output);  //clientId index								
-			addASCII(topic, 0, topic.length(), output); //topic		
-			addByteArray(payload, 0, payload.length, output);// payload 
-			
-			addIntValue(0, output); //QoS field
+			writeMessage(output);
 	
-			//NOTE: if writing a decimal field it is done with two statements
-			//      addIntValue(EXPONENT, output) //this is a value between -64 and +64 for moving the decimal place of the mantissa
-			//      addLongValue(MANTISSA,  output) //this is a normal long value holding all the digits of the decimal
-			
-			//NOTE: if writing a ieee double or float use on of the following
-			// 		addIntValue(Float.floatToIntBits(value),output);
-			// 		addLongValue(Double.floatToIntBits(value),output);
-			 
+
 			
 			//publish this fragment
 			publishWrites(output);
 			
-			//total up all the consumed bytes by all the fragments
-			consumedSize += FROM.fragDataSize[fragToWrite];
-					
+
 			/////
 			//in this case consumedSize is exactly the requiredSize however this need not always be true.
 			//for example if we had 2 different template messages that we wrote we could set the required size to the 
@@ -175,7 +159,7 @@ public class InputStageLowLevelExample extends PronghornStage {
 			////
 			
 			//only increment upon success
-			confirmLowLevelWrite(output, consumedSize);			
+			confirmLowLevelWrite(output, sizeOfFragment);			
 		}
 		
 		
@@ -188,6 +172,28 @@ public class InputStageLowLevelExample extends PronghornStage {
 		///////
 				
 	}
+
+
+    private void writeMessage(RingBuffer output) {
+        //NOTE: if writing a decimal field it is done with two statements
+        //      addIntValue(EXPONENT, output) //this is a value between -64 and +64 for moving the decimal place of the mantissa
+        //      addLongValue(MANTISSA,  output) //this is a normal long value holding all the digits of the decimal
+        
+        //NOTE: if writing a ieee double or float use on of the following
+        //      addIntValue(Float.floatToIntBits(value),output);
+        //      addLongValue(Double.floatToIntBits(value),output);
+         
+        
+        addMsgIdx(output, fragToWrite);					
+        			
+        addASCII(serverURI, 0, serverURILength, output); //serverURI
+        addUTF8(clientId, 0, clientIdLength, output); //clientId			
+        addIntValue(clientIdIndex, output);  //clientId index								
+        addASCII(topic, 0, topicLength, output); //topic		
+        addByteArray(payload, 0, payloadLength, output);// payload 
+        
+        addIntValue(0, output); //QoS field
+    }
 
 
 	@Override

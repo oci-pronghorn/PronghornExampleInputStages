@@ -21,10 +21,10 @@ import com.ociweb.pronghorn.stage.scheduling.ThreadPerStageScheduler;
 public class PipelineTest {
 
 	static final long TIMEOUT_SECONDS = 3;
-	static final long TEST_LENGTH_IN_SECONDS = 11;
+	static final long TEST_LENGTH_IN_SECONDS = 7;
 	
 	private static FieldReferenceOffsetManager from;
-	public static final int messagesOnRing = 1<<14;
+	public static final int messagesOnRing = 1<<16;
 	public static final int monitorMessagesOnRing = 7;
 	
 	private static final int maxLengthVarField = 40;
@@ -84,23 +84,20 @@ public class PipelineTest {
 			}
 	   		 
 	   	 };
-				
+		
 	   	GraphManager gm = new GraphManager();
-		
-		PronghornStage stage = buildSplitterTree(checkArgs, gm, ringBufferConfig, false);
-		
-		InputStageLowLevelExample producer = new InputStageLowLevelExample(gm, GraphManager.getInputPipe(gm, stage, 1));
-				
 
+	   	PronghornStage stage = buildSplitterTree(checkArgs, gm, ringBufferConfig, true);
+
+		InputStageLowLevelExample producer = new InputStageLowLevelExample(gm, GraphManager.getInputPipe(gm, stage));
+				
 		//If we can ask for stages by some id then we can look them up at the end as needed.
-		
-		
+				
 		addMonitorAndTest(gm, expected.length, " low level ");
 	}
 
 
-	private void addMonitorAndTest(GraphManager gm, int expectedLength,
-			String label) {
+	private void addMonitorAndTest(GraphManager gm, int expectedLength,	String label) {
 		//Add monitoring
 		MonitorConsoleStage.attach(gm, monitorRate, ringBufferMonitorConfig);
 		
@@ -108,13 +105,24 @@ public class PipelineTest {
 		GraphManager.enableBatching(gm);
 
 		
-		RingBuffer ringForDataCount = GraphManager.getInputPipe(gm, GraphManager.findStageByPath(gm, 1, 1, 2), 1);
-		timeAndRunTest(ringForDataCount, gm, label, TEST_LENGTH_IN_SECONDS, (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 1), 
-				                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 2), 
-				                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 3),
-				                            (CheckVarLengthValuesStage)GraphManager.findStageByPath(gm, 1, 1, 4)				                            
-				);
+		RingBuffer ringForByteCount = GraphManager.getInputPipe(gm, GraphManager.findStageByPath(gm, 1, 1), 1);
+
+		CheckVarLengthValuesStage[] outputStages = collectAllTheOutputStages(gm);
+		
+		timeAndRunTestByArray(ringForByteCount, gm, label, TEST_LENGTH_IN_SECONDS, outputStages);
+		
 	}
+
+
+    public CheckVarLengthValuesStage[] collectAllTheOutputStages(GraphManager gm) {
+        int outputStagesCount = GraphManager.getOutputStageCount(gm);
+		CheckVarLengthValuesStage outputStages[] = new CheckVarLengthValuesStage[outputStagesCount];
+		int i = outputStagesCount;
+		while (--i>=0) {
+		    outputStages[i] = (CheckVarLengthValuesStage)GraphManager.getOutputStage(gm, 1+i); 
+		}
+        return outputStages;
+    }
 
 
 	private static PronghornStage buildSplitterTree(CheckStageArguments checkArgs, GraphManager gm, RingBufferConfig config, boolean deepTest) {
@@ -125,12 +133,16 @@ public class PipelineTest {
 		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);	
 		
 		RoundRobinRouteStage stage = new RoundRobinRouteStage(gm, 
-				                                                 new RingBuffer(config.grow2x()), 
+				                                                 new RingBuffer(config.grow2x().grow2x()), 
 				                                                 GraphManager.getInputPipe(gm, dumpStage11), 
 				                                                 GraphManager.getInputPipe(gm, dumpStage12),
 				                                                 GraphManager.getInputPipe(gm, dumpStage21),
-																 GraphManager.getInputPipe(gm, dumpStage22)				
-																); 	
+																 GraphManager.getInputPipe(gm, dumpStage22)	
+		        ); 	
+		
+		
+	//	CheckVarLengthValuesStage stage = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);
+		
 
 		return stage;
 	}
@@ -166,7 +178,7 @@ public class PipelineTest {
 				
 		GraphManager gm = new GraphManager();
 		InputStageLowLevel40ByteBaselineExample  iso = new InputStageLowLevel40ByteBaselineExample(gm, ringBuffer1);
-		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer1, checkArgs, false); //NO DEEP CHECK
+		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, ringBuffer1, checkArgs, false); //NO DEEP CHECK	
 		
 		GraphManager.enableBatching(gm);
 		
@@ -207,7 +219,7 @@ public class PipelineTest {
 		GraphManager gm = new GraphManager();
 		
 		
-		PronghornStage stage = buildSplitterTree(checkArgs, gm, config, true);
+		PronghornStage stage = buildSplitterTree(checkArgs, gm, config, false);
        InputStageLowLevel40ByteBaselineExample producer = new InputStageLowLevel40ByteBaselineExample(gm, GraphManager.getInputPipe(gm, stage, 1));
 				
 		
@@ -302,9 +314,13 @@ public class PipelineTest {
 		
 	}
 	
-
-	private long timeAndRunTest(RingBuffer ringBuffer, GraphManager gm,
-			String label, long testInSeconds, CheckVarLengthValuesStage ... countStages) {
+    private long timeAndRunTest(RingBuffer ringBuffer, GraphManager gm,
+            String label, long testInSeconds, CheckVarLengthValuesStage ... countStages) {
+        return timeAndRunTestByArray(ringBuffer,gm, label, testInSeconds, countStages);
+    }
+    
+	private long timeAndRunTestByArray(RingBuffer ringBuffer, GraphManager gm,
+			String label, long testInSeconds, CheckVarLengthValuesStage[] countStages) {
 		StageScheduler scheduler = new ThreadPerStageScheduler(GraphManager.cloneAll(gm));
 		 
 	    long startTime = System.currentTimeMillis();

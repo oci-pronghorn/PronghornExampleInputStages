@@ -3,6 +3,12 @@ package com.ociweb.pronghorn.exampleStages;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Optional;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -14,8 +20,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 
 import org.junit.Test;
+
+
+import com.sun.xml.internal.ws.util.StreamUtils;
 
 public class baselineTest {
 
@@ -147,22 +160,136 @@ public class baselineTest {
 		}
 	}
 
-	//TOOD: need to build Java8 baseline exmple and Java7 handoff
+	
+	@Test
+	public void baselineNoQueueTest() {
+	      
+	       DailyQuoteNode expected = newInstance();
+	       
+	       long start = System.currentTimeMillis();
+	       final long stopTime = start+(PipelineTest.TEST_LENGTH_IN_SECONDS*1000);
+	       long totalMessages = 0;
+	       do {	       
+    	       DailyQuoteNode instance = newInstance();
+    	       if (!instance.equals(expected)) {
+    	           throw new AssertionError("objects did not match");
+    	          }
+    	       totalMessages++;
+	       } while (System.currentTimeMillis()<stopTime);
+	          
+	       
+	       long duration = (PipelineTest.TEST_LENGTH_IN_SECONDS*1000);
+	       
+	       System.out.println("TotalMessages:"+totalMessages + 
+	                          " Msg/Ms:"+(totalMessages/(float)duration)  + "         Baseline with nothing "+totalMessages+" vs "+totalMessages                         
+	                         );
+	    
+	       
+	       
+	}
+	
+	//TODOL need JMS stage and example
+	//TODO: use proxy to build immutable spliterator for use by java 8.
+	
+   @Test
+    public void baselineLambdasTest() {
+      
+       DailyQuoteNode expected = newInstance();
+       
+       long start = System.currentTimeMillis();
+       Stream<DailyQuoteNode> generator = streamGenerator(PipelineTest.TEST_LENGTH_IN_SECONDS);
+       
+        //very little work is done, this may be a better example if we did more work
+        long totalMessages = generator
+                                   .parallel()
+                                   .filter( (x) ->  {if (!x.equals(expected)) {throw new AssertionError("objects did not match");};
+                                                     return true;}
+                                           )      
+                                   .count();
+        //exceptions are awkward
+        //requires POJO interface
+        //may be a good technology inside of a single stage.
+        //Streams are basically function composition and do not have support for queueing or routing
+        
+        //use lambdas to compose functions and eliminate multiple iterations over the data.
+        //for more course grained work and system boundries more stages should be used.
+        
+        /*
+         * FROM JAVA DOCS:
+         * 
+         * A stream should be operated on (invoking an intermediate or terminal stream operation) only once.
+         * This rules out, for example, "forked" streams, where the same source feeds two or more pipelines,
+         *  or multiple traversals of the same stream.
+         */
+        
+             
+       long duration = System.currentTimeMillis()-start;
+       
+       System.out.println("TotalMessages:"+totalMessages + 
+                          " Msg/Ms:"+(totalMessages/(float)duration)  + "         Baseline with lambdas "+totalMessages+" vs "+totalMessages                         
+                         );
+       
+   }
+
+   
+public DailyQuoteNode newInstance() {
+       DailyQuoteNode newInstance;
+
+    //To make the test same as the other tests object creation is done outside the loop.
+       newInstance = new DailyQuoteNode();
+       
+       newInstance.writeSymbol(InputStageEventConsumerExample.testSymbol);
+       newInstance.writeCompanyName(InputStageEventConsumerExample.testCompanyName);
+       newInstance.writeHighPrice(InputStageEventConsumerExample.testHigh);
+       newInstance.writeLowPrice(InputStageEventConsumerExample.testLow);
+       newInstance.writeOpenPrice(InputStageEventConsumerExample.testOpen);
+       newInstance.writeClosedPrice(InputStageEventConsumerExample.testClose);
+       newInstance.writeVolume(InputStageEventConsumerExample.testVolume);
+       
+       return newInstance;
+}
+   
+   
+   public Stream<DailyQuoteNode> streamGenerator(final long duration) {
+       
+       Spliterator<DailyQuoteNode> sp = new Spliterators.AbstractSpliterator<DailyQuoteNode>(Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.NONNULL) {
+           final long startTime = System.currentTimeMillis();
+           final long stopTime = startTime+(duration*1000);
+           
+           @Override
+           public boolean tryAdvance(Consumer<? super DailyQuoteNode> action) {
+                       DailyQuoteNode oneInstance = newInstance();
+                       if (System.currentTimeMillis()<stopTime) {
+                           action.accept(oneInstance);
+                           return true;
+                       } else {
+                           return false;
+                       }
+           }
+
+           @Override
+           public void forEachRemaining(Consumer<? super DailyQuoteNode> action) {               
+               do {
+                   DailyQuoteNode oneInstance = newInstance();                   
+                   action.accept(oneInstance);
+               } while (System.currentTimeMillis()<stopTime);
+           }
+       };
+       return StreamSupport.stream(sp, false);
+       
+   }
 	
 	@Test
 	public void baselineBlockingQueueTest() {
 		
 		//TransferQueue<DailyQuote> xx = new LinkedTransferQueue<DailyQuote>();
 		
-		//LinkedBlockingQueue
-		//final BlockingQueue<DailyQuote> queue = new ArrayBlockingQueue<DailyQuote>(PipelineTest.messagesOnRing);		
+		//LinkedBlockingQueue	
 		final BlockingQueue<DailyQuoteConsumer> queue = new ArrayBlockingQueue<DailyQuoteConsumer>(PipelineTest.messagesOnRing);
 		
-		final BlockingQueue<DailyQuoteConsumer> queue1 = new ArrayBlockingQueue<DailyQuoteConsumer>(PipelineTest.messagesOnRing);
 		final BlockingQueue<DailyQuoteConsumer> queue11 = new ArrayBlockingQueue<DailyQuoteConsumer>(PipelineTest.messagesOnRing);
 		final BlockingQueue<DailyQuoteConsumer> queue12 = new ArrayBlockingQueue<DailyQuoteConsumer>(PipelineTest.messagesOnRing);
 		
-		final BlockingQueue<DailyQuoteConsumer> queue2 = new ArrayBlockingQueue<DailyQuoteConsumer>(PipelineTest.messagesOnRing);
 		final BlockingQueue<DailyQuoteConsumer> queue21 = new ArrayBlockingQueue<DailyQuoteConsumer>(PipelineTest.messagesOnRing);
 		final BlockingQueue<DailyQuoteConsumer> queue22 = new ArrayBlockingQueue<DailyQuoteConsumer>(PipelineTest.messagesOnRing);
 		
@@ -189,16 +316,7 @@ public class baselineTest {
 			@Override
 			public void run() {
 
-				//To make the test same as the other tests object creation is done outside the loop.
-				DailyQuoteConsumer newInstance = new DailyQuoteNode();
-				
-				newInstance.writeSymbol(InputStageEventConsumerExample.testSymbol);
-				newInstance.writeCompanyName(InputStageEventConsumerExample.testCompanyName);
-				newInstance.writeHighPrice(InputStageEventConsumerExample.testHigh);
-				newInstance.writeLowPrice(InputStageEventConsumerExample.testLow);
-				newInstance.writeOpenPrice(InputStageEventConsumerExample.testOpen);
-				newInstance.writeClosedPrice(InputStageEventConsumerExample.testClose);
-				newInstance.writeVolume(InputStageEventConsumerExample.testVolume);								
+			    DailyQuoteConsumer newInstance = newInstance();								
 
 				while (isLiving.get()) {				
 
@@ -210,47 +328,40 @@ public class baselineTest {
 			}			
 		};
 		
-		Runnable splitter = new Runnable() {
 
-			@Override
-			public void run() {
-				while (isLiving.get()) {
-					
-					while (!queue.isEmpty() && isLiving.get()) {
-						DailyQuoteConsumer item = queue.remove();
-						
-							while (!queue1.offer(item) && isLiving.get()){
-								Thread.yield();
-							};
-							while (!queue2.offer(item) && isLiving.get()) {
-								Thread.yield();
-							};	
-						
-					}					
-				}
-			}			
-		};
-
-		Runnable router11 = new Runnable() {
+		Runnable router = new Runnable() {
 
 			@Override
 			public void run() {
 				int count = 0;
 				while (isLiving.get()) {
 					
-					while (!queue1.isEmpty() && isLiving.get()) {
-						DailyQuoteConsumer item = queue1.remove();
+					while (!queue.isEmpty() && isLiving.get()) {
+						DailyQuoteConsumer item = queue.remove();
 						
-						   //half one way and half the other
-						   if (0==(1&count++)) {						   
-							   while (!queue11.offer(item) && isLiving.get()){
-								   Thread.yield();
-							   }
-						   } else {
-							   while (!queue12.offer(item) && isLiving.get()) {
-								   Thread.yield();
-							   }							   
-						   }	
+						
+						    switch ((3&count++)) {
+    						    case 0:
+    						        while (!queue11.offer(item) && isLiving.get()){
+    	                                   Thread.yield();
+    	                               }
+    						        break;
+    						    case 1:
+    						        while (!queue12.offer(item) && isLiving.get()){
+    	                                   Thread.yield();
+    	                               }
+    						        break;
+    						    case 2:
+    						        while (!queue21.offer(item) && isLiving.get()){
+    	                                   Thread.yield();
+    	                               }
+    						        break;
+    						    case 3:
+    						        while (!queue22.offer(item) && isLiving.get()){
+    	                                   Thread.yield();
+    	                               }
+    						        break;
+						    }	
 					}					
 				}
 			}			
@@ -295,30 +406,6 @@ public class baselineTest {
 		};
 		
 		
-		Runnable router12 = new Runnable() {
-
-			@Override
-			public void run() {
-				int count = 0;
-				while (isLiving.get()) {
-					
-					while (!queue2.isEmpty() && isLiving.get()) {
-						DailyQuoteConsumer item = queue2.remove();
-						
-						   //half one way and half the other
-						   if (0==(1&count++)) {						   
-							   while (!queue21.offer(item) && isLiving.get()){
-								   Thread.yield();
-							   }
-						   } else {
-							   while (!queue22.offer(item) && isLiving.get()) {
-								   Thread.yield();
-							   }							   
-						   }	
-					}					
-				}
-			}			
-		};
 		
 		Runnable dumper21 = new Runnable() {
 			int count;
@@ -363,13 +450,10 @@ public class baselineTest {
 		
 	    long startTime = System.currentTimeMillis();
 	    executor.execute(generator);
-	    executor.execute(splitter);
 	    
-	    executor.execute(router11);
+	    executor.execute(router);
 	    executor.execute(dumper11);
-	    executor.execute(dumper12);	    
-	    
-	    executor.execute(router12);
+	    executor.execute(dumper12);	
 	    executor.execute(dumper21);
 	    executor.execute(dumper22);
 	    
@@ -421,34 +505,16 @@ public class baselineTest {
 		final AtomicLong messages12 = new AtomicLong();
 		final AtomicLong messages21 = new AtomicLong();
 		final AtomicLong messages22 = new AtomicLong();
-		
-		
-		final DailyQuoteConsumer expected = new DailyQuoteNode();
-		expected.writeSymbol(InputStageEventConsumerExample.testSymbol);
-		expected.writeCompanyName(InputStageEventConsumerExample.testCompanyName);
-		expected.writeHighPrice(InputStageEventConsumerExample.testHigh);
-		expected.writeLowPrice(InputStageEventConsumerExample.testLow);
-		expected.writeOpenPrice(InputStageEventConsumerExample.testOpen);
-		expected.writeClosedPrice(InputStageEventConsumerExample.testClose);
-		expected.writeVolume(InputStageEventConsumerExample.testVolume);
-		
-		
+				
+		final DailyQuoteConsumer expected = newInstance();
+				
 		Runnable generator = new Runnable() {
 			
 			
 			@Override
 			public void run() {
 
-				//To make the test same as the other tests object creation is done outside the loop.
-				DailyQuoteConsumer newInstance = new DailyQuoteNode();
-				
-				newInstance.writeSymbol(InputStageEventConsumerExample.testSymbol);
-				newInstance.writeCompanyName(InputStageEventConsumerExample.testCompanyName);
-				newInstance.writeHighPrice(InputStageEventConsumerExample.testHigh);
-				newInstance.writeLowPrice(InputStageEventConsumerExample.testLow);
-				newInstance.writeOpenPrice(InputStageEventConsumerExample.testOpen);
-				newInstance.writeClosedPrice(InputStageEventConsumerExample.testClose);
-				newInstance.writeVolume(InputStageEventConsumerExample.testVolume);								
+			    DailyQuoteConsumer newInstance = newInstance();								
 
 				try {
 					while (isLiving.get()) {				
