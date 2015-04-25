@@ -3,19 +3,13 @@ package com.ociweb.pronghorn.exampleStages;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,11 +18,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-
 import org.junit.Test;
-
-
-import com.sun.xml.internal.ws.util.StreamUtils;
 
 public class baselineTest {
 
@@ -202,7 +192,7 @@ public class baselineTest {
         //very little work is done, this may be a better example if we did more work
         long totalMessages = generator
                                    .parallel()
-                                   .filter( (x) ->  {if (!x.equals(expected)) {throw new AssertionError("objects did not match");};
+                                   .filter( (x) ->  {if (!x.equals(expected)) {throw new AssertionError("objects did not match");}
                                                      return true;}
                                            )      
                                    .count();
@@ -322,8 +312,7 @@ public DailyQuoteNode newInstance() {
 
 					while (!queue.offer(newInstance) && isLiving.get()){
 						Thread.yield();
-					};
-	
+					}
 				}	
 			}			
 		};

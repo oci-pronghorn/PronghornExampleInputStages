@@ -1,10 +1,5 @@
 package com.ociweb.pronghorn.exampleStages;
 
-import static com.ociweb.pronghorn.ring.RingWriter.writeASCII;
-import static com.ociweb.pronghorn.ring.RingWriter.writeDecimal;
-import static com.ociweb.pronghorn.ring.RingWriter.writeLong;
-import static com.ociweb.pronghorn.ring.RingWriter.writeUTF8;
-
 import java.nio.ByteBuffer;
 
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;

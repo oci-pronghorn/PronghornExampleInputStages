@@ -1,13 +1,16 @@
 package com.ociweb.pronghorn.exampleStages;
 
 import static com.ociweb.pronghorn.ring.FieldReferenceOffsetManager.lookupFieldLocator;
-import static com.ociweb.pronghorn.ring.FieldReferenceOffsetManager.lookupFragmentLocator;
 import static com.ociweb.pronghorn.ring.FieldReferenceOffsetManager.lookupTemplateLocator;
-import static com.ociweb.pronghorn.ring.RingWriter.*;
+import static com.ociweb.pronghorn.ring.RingWriter.publishWrites;
+import static com.ociweb.pronghorn.ring.RingWriter.tryWriteFragment;
+import static com.ociweb.pronghorn.ring.RingWriter.writeASCII;
+import static com.ociweb.pronghorn.ring.RingWriter.writeDecimal;
+import static com.ociweb.pronghorn.ring.RingWriter.writeLong;
+import static com.ociweb.pronghorn.ring.RingWriter.writeUTF8;
 
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;
-import com.ociweb.pronghorn.ring.RingWriter;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 

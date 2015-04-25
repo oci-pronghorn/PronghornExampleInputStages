@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.Assert.*;
 
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;
@@ -93,11 +92,11 @@ public class PipelineTest {
 				
 		//If we can ask for stages by some id then we can look them up at the end as needed.
 				
-		addMonitorAndTest(gm, expected.length, " low level ");
+		addMonitorAndTest(gm, " low level ");
 	}
 
 
-	private void addMonitorAndTest(GraphManager gm, int expectedLength,	String label) {
+	private void addMonitorAndTest(GraphManager gm, String label) {
 		//Add monitoring
 		MonitorConsoleStage.attach(gm, monitorRate, ringBufferMonitorConfig);
 		
@@ -223,7 +222,7 @@ public class PipelineTest {
        InputStageLowLevel40ByteBaselineExample producer = new InputStageLowLevel40ByteBaselineExample(gm, GraphManager.getInputPipe(gm, stage, 1));
 				
 		
-       addMonitorAndTest(gm, 0, " low level 40 ");
+       addMonitorAndTest(gm, " low level 40 ");
 
 	}
 	
@@ -262,7 +261,7 @@ public class PipelineTest {
 			
 			InputStageHighLevelExample producer = new InputStageHighLevelExample(gm, GraphManager.getInputPipe(gm, stage, 1));
 					
-			addMonitorAndTest(gm, 0, " high level ");
+			addMonitorAndTest(gm, " high level ");
 		
 
 		
@@ -308,7 +307,7 @@ public class PipelineTest {
 		InputStageEventConsumerExample producer = new InputStageEventConsumerExample(gm, GraphManager.getInputPipe(gm, stage, 1));
 				
 		
-		addMonitorAndTest(gm, 0, " event consumer ");
+		addMonitorAndTest(gm, " event consumer ");
 
 		
 		

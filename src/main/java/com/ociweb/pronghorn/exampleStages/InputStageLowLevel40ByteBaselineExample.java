@@ -1,9 +1,11 @@
 package com.ociweb.pronghorn.exampleStages;
 
-import static com.ociweb.pronghorn.ring.RingBuffer.*;
-
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
+import static com.ociweb.pronghorn.ring.RingBuffer.addByteArray;
+import static com.ociweb.pronghorn.ring.RingBuffer.addMsgIdx;
+import static com.ociweb.pronghorn.ring.RingBuffer.confirmLowLevelWrite;
+import static com.ociweb.pronghorn.ring.RingBuffer.initLowLevelWriter;
+import static com.ociweb.pronghorn.ring.RingBuffer.publishWrites;
+import static com.ociweb.pronghorn.ring.RingBuffer.roomToLowLevelWrite;
 
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;

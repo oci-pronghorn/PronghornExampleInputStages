@@ -187,7 +187,7 @@ public class InputStageLowLevelExample extends PronghornStage {
         addMsgIdx(output, fragToWrite);					
         			
         addASCII(serverURI, 0, serverURILength, output); //serverURI
-        addUTF8(clientId, 0, clientIdLength, output); //clientId			
+        addUTF8(clientId, clientIdLength, output); //clientId			
         addIntValue(clientIdIndex, output);  //clientId index								
         addASCII(topic, 0, topicLength, output); //topic		
         addByteArray(payload, 0, payloadLength, output);// payload 
