@@ -89,8 +89,9 @@
               <artifactId>maven-compiler-plugin</artifactId>
               <version>3.0</version>
 	      <configuration>
-		<source>1.8</source> <!-- Using Java 8 only for comparison, the core libs only need Java 6 --> 
- 		<target>1.8</target>
+			<source>1.8</source> <!-- Using Java 8 only for comparison, the core libs only need Java 6 --> 
+	 		<target>1.8</target>
+	        <argLine>-Xmx1024m</argLine>
 	      </configuration>
 	    </plugin>
 	   
