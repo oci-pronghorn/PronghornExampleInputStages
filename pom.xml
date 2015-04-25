@@ -91,8 +91,18 @@
 	      <configuration>
 			<source>1.8</source> <!-- Using Java 8 only for comparison, the core libs only need Java 6 --> 
 	 		<target>1.8</target>
-	        <argLine>-Xmx1024m</argLine>
 	      </configuration>
+	    </plugin>
+	    
+	    <plugin>
+	        <groupId>org.apache.maven.plugins</groupId>
+	        <artifactId>maven-surefire-plugin</artifactId>
+	        <version>2.18.1</version>
+	        <configuration>
+		        <argLine>-Xmx2048m</argLine>
+	            <!--  parallel>methods</parallel -->
+	            <!--  threadCount>3</threadCount -->
+	        </configuration>
 	    </plugin>
 	   
 	  </plugins>
