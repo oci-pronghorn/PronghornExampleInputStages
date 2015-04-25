@@ -1,6 +1,5 @@
 package com.ociweb.pronghorn.exampleStages;
 
-import static com.ociweb.pronghorn.ring.RingBuffer.releaseReadLock;
 import static org.junit.Assert.fail;
 
 import java.util.Arrays;
@@ -82,7 +81,8 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 		int len = buffer[ (((int)nextTargetHead) - 1) & mask];
 		
 		deepValueTesting(len);
-		releaseReadLock(inputRing);
+		RingBuffer.releaseReadLock(inputRing);
+		//releaseReadLock(inputRing);
 		
 		workingTailPos.value = nextTargetHead;
 		byteWorkingTailPos.value =  RingBuffer.BYTES_WRAP_MASK&(byteWorkingTailPos.value + len);
