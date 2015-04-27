@@ -99,7 +99,7 @@ public class InputStageLowLevelExample extends PronghornStage {
 	public void startup() {
 		try{
 			//setup the output ring for low level writing			
-			initLowLevelWriter(output); //TODO: AA, working to remove this.
+			 //TODO: AA, working to remove this.
 		
 		    ///////
 			//PUT YOUR LOGIC HERE FOR CONNTECTING TO THE DATABASE OR OTHER SOURCE OF INFORMATION
