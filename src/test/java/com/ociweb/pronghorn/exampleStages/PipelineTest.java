@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import static org.junit.Assert.*;
 
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;
@@ -257,17 +258,53 @@ public class PipelineTest {
 	   	 
 	   	 GraphManager gm = new GraphManager();
 	   	 
-	   	PronghornStage stage = buildSplitterTree(checkArgs, gm, ringBufferConfig, true);
+ 	   	 PronghornStage stage = buildSplitterTree(checkArgs, gm, ringBufferConfig, true);
 			
-			InputStageHighLevelExample producer = new InputStageHighLevelExample(gm, GraphManager.getInputPipe(gm, stage, 1));
+		 InputStageHighLevelExample producer = new InputStageHighLevelExample(gm, GraphManager.getInputPipe(gm, stage, 1));
 					
-			addMonitorAndTest(gm, " high level ");
-		
-
-		
+		 addMonitorAndTest(gm, " high level ");
+				
 	}
 
+    @Test
+    public void streamingVisitorInputStageTest() {                             
+        
+        //  build the expected data that should be found on the byte ring.
+        final byte[] expected = (InputStageHighLevelExample.testSymbol+InputStageHighLevelExample.testCompanyName).getBytes();
+        final int expectedMsg = from.messageStarts[1];
+        final int[] expectedInts =  new int[] {8, 0, 3, 3, 31, 34, 0, 2, 0, 10250, 2, 0, 10250, 2, 0, 10250, 2, 0, 10250, 0, 10000000, 34};
+        
+        CheckStageArguments checkArgs = new CheckStageArguments() {
 
+            @Override
+            public int expectedMessageIdx() {
+                return expectedMsg;
+            }
+    
+            @Override
+            public byte[] expectedBytes() {
+                return expected;
+            }
+    
+            @Override
+            public int[] expectedInts() {
+                return expectedInts;
+            }
+             
+         };
+         
+         GraphManager gm = new GraphManager();
+         
+         PronghornStage stage = buildSplitterTree(checkArgs, gm, ringBufferConfig, true);
+            
+         PronghornStage producer = new InputStageStreamingVisitorExample(gm, GraphManager.getInputPipe(gm, stage, 1));
+                    
+         addMonitorAndTest(gm, " streaming visitor ");
+        
+
+        
+    }
+	
 		
 	@Test
 	public void eventConsumerInputStageTest() {
@@ -368,7 +405,8 @@ public class PipelineTest {
 			System.out.println(label+" warning duration:"+duration+" messages:"+messages);
 		}
 		
-		//assertTrue("RingBuffer: "+ringBuffer, cleanExit);
+		
+		assertTrue("RingBuffer: "+ringBuffer, cleanExit);
 	
 		return messages;
 	}

@@ -154,7 +154,7 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 		} catch (Throwable t) {
 			 // ignore
 		}
-		//fail("Ints do not match at index "+j+" of "+fragSize+"   tailPos:"+RingBuffer.tailPosition(inputRing)+" byteFailurePos:"+(primaryPos+j)+" masked "+((primaryPos+j)&inputRing.mask));
+		fail("Ints do not match ");
 	}
 
 }
