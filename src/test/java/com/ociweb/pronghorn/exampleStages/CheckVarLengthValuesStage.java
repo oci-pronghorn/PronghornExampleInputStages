@@ -7,7 +7,6 @@ import java.util.Arrays;
 import com.ociweb.pronghorn.exampleStages.PipelineTest.CheckStageArguments;
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;
-import com.ociweb.pronghorn.ring.RingBuffer.PaddedInt;
 import com.ociweb.pronghorn.ring.RingBuffer.PaddedLong;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
@@ -58,14 +57,14 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 	}
 
 	private void consumeMessages(RingBuffer inputRing) {
-		runTest2(fragSize, inputRing, inputRing.mask, inputRing.buffer, inputRing.workingTailPos, inputRing.byteWorkingTailPos);
+		runTest2(fragSize, inputRing, inputRing.mask, inputRing.buffer, inputRing.workingTailPos);
 	}
 
-	private void runTest2(int fragSize, RingBuffer inputRing, int mask,	int[] buffer, PaddedLong workingTailPos, PaddedInt byteWorkingTailPos) {
+	private void runTest2(int fragSize, RingBuffer inputRing, int mask,	int[] buffer, PaddedLong workingTailPos) {
 		long c = 0;		
 		long b = 0;
 		do {
-			b += consumeMessage(fragSize, inputRing, mask, buffer, workingTailPos, byteWorkingTailPos);
+			b += consumeMessage(fragSize, inputRing, mask, buffer, workingTailPos);
 			c++;					
 		} while (RingBuffer.contentToLowLevelRead(inputRing,fragSize));	
 
@@ -73,7 +72,7 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 		bytes += b;
 	}
 
-	private long consumeMessage(int fragSize, RingBuffer inputRing,	int mask, int[] buffer, PaddedLong workingTailPos, PaddedInt byteWorkingTailPos) {
+	private long consumeMessage(int fragSize, RingBuffer inputRing,	int mask, int[] buffer, PaddedLong workingTailPos) {
 		
 		long nextTargetHead = RingBuffer.confirmLowLevelRead(inputRing, fragSize);
 
@@ -85,7 +84,8 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 		//releaseReadLock(inputRing);
 		
 		workingTailPos.value = nextTargetHead;
-		byteWorkingTailPos.value =  RingBuffer.BYTES_WRAP_MASK&(byteWorkingTailPos.value + len);
+		
+		RingBuffer.addAndGetBytesWorkingTailPosition(inputRing, len);
 							
 		return len;
 	}
