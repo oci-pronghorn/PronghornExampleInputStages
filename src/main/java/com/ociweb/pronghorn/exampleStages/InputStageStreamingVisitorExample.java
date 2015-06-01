@@ -19,6 +19,7 @@ public class InputStageStreamingVisitorExample extends PronghornStage {
 	private final class ExampleWriterVisitor implements StreamingWriteVisitor {
 	    
 	    final int msgIdx;
+	    boolean paused = true;
 	    
         public ExampleWriterVisitor(FieldReferenceOffsetManager from) {
             
@@ -27,7 +28,7 @@ public class InputStageStreamingVisitorExample extends PronghornStage {
 
         @Override
         public boolean paused() {
-            return false;
+            return paused = !paused;
         }
 
         @Override
