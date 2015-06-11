@@ -57,7 +57,7 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 	}
 
 	private void consumeMessages(RingBuffer inputRing) {
-		runTest2(fragSize, inputRing, inputRing.mask, inputRing.buffer, inputRing.workingTailPos);
+		runTest2(fragSize, inputRing, inputRing.mask, RingBuffer.primaryBuffer(inputRing), RingBuffer.getWorkingTailPositionObject(inputRing));
 	}
 
 	private void runTest2(int fragSize, RingBuffer inputRing, int mask,	int[] buffer, PaddedLong workingTailPos) {
@@ -111,7 +111,7 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 		if (expectedBytes.length!=len) {
 			byteLengthMismatch(len);
 		}
-	    deepByteCheck(len, base, len, inputRing.byteMask, inputRing.byteBuffer);
+	    deepByteCheck(len, base, len, inputRing.byteMask, RingBuffer.byteBuffer(inputRing));
 	}
 
 	private void deepByteCheck(int len, int base, int i, int byteMask, byte[] byteBuffer) {
@@ -135,11 +135,11 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 	}
 
 	private void testExpectedInts() {
-		long primaryPos = inputRing.workingTailPos.value;
+		long primaryPos = RingBuffer.getWorkingTailPosition(inputRing);
 		int j = fragSize;
 		//int[] expectedInts = new int[fragSize];
 		while (--j>=0) {
-			if (expectedInts[j] != inputRing.buffer[(int)(primaryPos+j)&inputRing.mask]) {
+			if (expectedInts[j] != RingBuffer.primaryBuffer(inputRing)[(int)(primaryPos+j)&inputRing.mask]) {
 			    showIntError(primaryPos);
 			}
 		}
@@ -150,7 +150,7 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 		System.err.println(Arrays.toString(expectedInts));
 		
 		try {
-		  System.err.println( Arrays.toString(Arrays.copyOfRange(inputRing.buffer, (int)primaryPos&inputRing.mask, (int)(primaryPos+fragSize)&inputRing.mask)) );
+		  System.err.println( Arrays.toString(Arrays.copyOfRange(RingBuffer.primaryBuffer(inputRing), (int)primaryPos&inputRing.mask, (int)(primaryPos+fragSize)&inputRing.mask)) );
 		} catch (Throwable t) {
 			 // ignore
 		}
