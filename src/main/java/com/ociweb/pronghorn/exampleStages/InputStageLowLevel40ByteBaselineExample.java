@@ -56,7 +56,7 @@ public class InputStageLowLevel40ByteBaselineExample extends PronghornStage {
 	 *           * If the consumer is far ahead the check for room does not need to update from tail position
 	 *           * Writes can be batched to release larger blocks to the consumer for fewer head position updates
 	 *           * ASCII, UTF8 and Bytes can be accumulated on the buffer followed by a single total on the primary ring.
-	 *               (see the implementation of addASII, addUTF8 for this)
+	 *               (see the implementation of addASCII, addUTF8 for this)
 	 * 
 	 * 
 	 * @param graphManager
@@ -110,7 +110,7 @@ public class InputStageLowLevel40ByteBaselineExample extends PronghornStage {
 			 //TODO: AA, working to remove this.
 		
 		    ///////
-			//PUT YOUR LOGIC HERE FOR CONNTECTING TO THE DATABASE OR OTHER SOURCE OF INFORMATION
+			//PUT YOUR LOGIC HERE FOR CONNECTING TO THE DATABASE OR OTHER SOURCE OF INFORMATION
 			//////
 			
 
