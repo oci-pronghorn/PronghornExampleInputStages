@@ -74,7 +74,7 @@ public class InputStageHighLevelExample extends PronghornStage {
 		try{
 						
 		    ///////
-			//PUT YOUR LOGIC HERE FOR CONNTECTING TO THE DATABASE OR OTHER SOURCE OF INFORMATION
+			//PUT YOUR LOGIC HERE FOR CONNECTING TO THE DATABASE OR OTHER SOURCE OF INFORMATION
 			//////
 			
 			
@@ -82,7 +82,7 @@ public class InputStageHighLevelExample extends PronghornStage {
 		} catch (Throwable t) {
 			throw new RuntimeException(t);
 		}
-		//call the super.starup() last to keep schedulers from getting too eager and starting early
+		//call the super.startup() last to keep schedulers from getting too eager and starting early
 		super.startup();
 	}
 	
