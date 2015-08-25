@@ -30,7 +30,7 @@ public class PipelineTest {
 	
 	private static final int maxLengthVarField = 40;
 	
-	private final Integer monitorRate = Integer.valueOf(50000000);
+	private final Long monitorRate = Long.valueOf(50000000);
 	
 	private static RingBufferConfig ringBufferConfig;
 	private static RingBufferConfig ringBufferMonitorConfig;
