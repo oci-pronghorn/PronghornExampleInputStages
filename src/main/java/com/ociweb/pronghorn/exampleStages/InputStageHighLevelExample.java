@@ -9,8 +9,11 @@ import static com.ociweb.pronghorn.ring.RingWriter.writeDecimal;
 import static com.ociweb.pronghorn.ring.RingWriter.writeLong;
 import static com.ociweb.pronghorn.ring.RingWriter.writeUTF8;
 
+import java.util.Arrays;
+
 import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.ring.RingBuffer;
+import com.ociweb.pronghorn.ring.RingWriter;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 
@@ -107,15 +110,25 @@ public class InputStageHighLevelExample extends PronghornStage {
 			// in order to build unit tests we must write every field here
 			//If fields are not written however keep in mind that they will be filled with garbage.
 			
+			
+			//NOTE: because we write this one first it will have a zero offset in the array but because it is zero length will not move any of the other fields.
+			//      if we used the visitor to write this it would be in position 24 instead of zero just be cause of the write order.
 			writeUTF8(output, FIELD_EMPTY, (char[])null, 0, -1);
 			
-			writeLong(output, FIELD_VOLUME, 10000000l);			
+						
 			
-			writeASCII(output, FIELD_SYMBOL, testSymbol);
-			writeASCII(output, FIELD_COMPANY_NAME, testCompanyName);
-			
+//			//debug logic to peek into primary ring
+//			long primaryPos = RingWriter.structuredPositionForLOC(output, FIELD_EMPTY);
+//			int fragSize = 2;
+//		    System.err.println("XXX:"+Arrays.toString(Arrays.copyOfRange(RingBuffer.primaryBuffer(output), (int)primaryPos&output.mask, (int)(primaryPos+fragSize)&output.mask)) );
+
+		    writeLong(output, FIELD_VOLUME, 10000000l);			
+		    
+		    writeASCII(output, FIELD_SYMBOL, testSymbol);
+		    writeASCII(output, FIELD_COMPANY_NAME, testCompanyName);
 			
 			publishWrites(output);
+
 		}
 		
 		

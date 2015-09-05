@@ -128,21 +128,21 @@ public class PipelineTest {
 
 	private static PronghornStage buildSplitterTree(CheckStageArguments checkArgs, GraphManager gm, RingBufferConfig config, boolean deepTest) {
 		
-		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);
-		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);		
-		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);
-		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);	
+//		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);
+//		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);		
+//		CheckVarLengthValuesStage dumpStage21 = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);
+//		CheckVarLengthValuesStage dumpStage22 = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);	
+//		
+//		RoundRobinRouteStage stage = new RoundRobinRouteStage(gm, 
+//				                                                 new RingBuffer(config.grow2x().grow2x()), 
+//				                                                 GraphManager.getInputPipe(gm, dumpStage11), 
+//				                                                 GraphManager.getInputPipe(gm, dumpStage12),
+//				                                                 GraphManager.getInputPipe(gm, dumpStage21),
+//																 GraphManager.getInputPipe(gm, dumpStage22)	
+//		        ); 	
 		
-		RoundRobinRouteStage stage = new RoundRobinRouteStage(gm, 
-				                                                 new RingBuffer(config.grow2x().grow2x()), 
-				                                                 GraphManager.getInputPipe(gm, dumpStage11), 
-				                                                 GraphManager.getInputPipe(gm, dumpStage12),
-				                                                 GraphManager.getInputPipe(gm, dumpStage21),
-																 GraphManager.getInputPipe(gm, dumpStage22)	
-		        ); 	
 		
-		
-	//	CheckVarLengthValuesStage stage = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);
+		CheckVarLengthValuesStage stage = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);
 		
 
 		return stage;
@@ -191,9 +191,7 @@ public class PipelineTest {
 	public void lowLevel40InputStageTest() {
 								
 		RingBufferConfig config = new RingBufferConfig(FieldReferenceOffsetManager.RAW_BYTES, messagesOnRing, InputStageLowLevel40ByteBaselineExample.payload.length);
-				
-
-		
+	
 		final byte[] expectedBytes = InputStageLowLevel40ByteBaselineExample.payload;
 		
 		
@@ -231,31 +229,11 @@ public class PipelineTest {
 	
 	@Test
 	public void highLevelInputStageTest() {								
-
-		
-   	    //	build the expected data that should be found on the byte ring.
-   	    final byte[] expected = (InputStageHighLevelExample.testSymbol+InputStageHighLevelExample.testCompanyName).getBytes();
-   	    final int expectedMsg = from.messageStarts[1];
-   	    final int[] expectedInts =  new int[] {8, 0, 3, 3, 31, 0, 0, 2, 0, 10250, 2, 0, 10250, 2, 0, 10250, 2, 0, 10250, 0, 10000000, 34};
-		
-	   	CheckStageArguments checkArgs = new CheckStageArguments() {
-
-			@Override
-			public int expectedMessageIdx() {
-				return expectedMsg;
-			}
-	
-			@Override
-			public byte[] expectedBytes() {
-				return expected;
-			}
-	
-			@Override
-			public int[] expectedInts() {
-				return expectedInts;
-			}
-	   		 
-	   	 };
+	    
+	    //NOTE: because everything is relative offset from the start of the message all the field position values will remain constant.
+	    CheckStageArguments checkArgs = argumentChecker((InputStageHighLevelExample.testSymbol+InputStageHighLevelExample.testCompanyName).getBytes(),
+	                                                     new int[] {8, 0, 3, 3, 31, 0, 0, 2, 0, 10250, 2, 0, 10250, 2, 0, 10250, 2, 0, 10250, 0, 10000000, 34});
+	                                                  //The  0 0 is 34 0 when using the visitor because of the order of the fields written
 	   	 
 	   	 GraphManager gm = new GraphManager();
 	   	 
@@ -271,9 +249,24 @@ public class PipelineTest {
     public void streamingVisitorInputStageTest() {                             
         
         //  build the expected data that should be found on the byte ring.
-        final byte[] expected = (InputStageHighLevelExample.testSymbol+InputStageHighLevelExample.testCompanyName).getBytes();
+         CheckStageArguments checkArgs = argumentChecker((InputStageHighLevelExample.testSymbol+InputStageHighLevelExample.testCompanyName).getBytes(),
+                                                         new int[] {8, 0, 3, 3, 31, 34, 0, 2, 0, 10250, 2, 0, 10250, 2, 0, 10250, 2, 0, 10250, 0, 10000000, 34});
+         
+         GraphManager gm = new GraphManager();
+         
+         PronghornStage stage = buildSplitterTree(checkArgs, gm, ringBufferConfig, true);
+            
+         PronghornStage producer = new InputStageStreamingVisitorExample(gm, GraphManager.getInputPipe(gm, stage, 1));
+                    
+         addMonitorAndTest(gm, " streaming visitor ");
+        
+
+        
+    }
+
+
+    private CheckStageArguments argumentChecker(final byte[] expected, final int[] expectedInts) {
         final int expectedMsg = from.messageStarts[1];
-        final int[] expectedInts =  new int[] {8, 0, 3, 3, 31, 34, 0, 2, 0, 10250, 2, 0, 10250, 2, 0, 10250, 2, 0, 10250, 0, 10000000, 34};
         
         CheckStageArguments checkArgs = new CheckStageArguments() {
 
@@ -293,48 +286,16 @@ public class PipelineTest {
             }
              
          };
-         
-         GraphManager gm = new GraphManager();
-         
-         PronghornStage stage = buildSplitterTree(checkArgs, gm, ringBufferConfig, true);
-            
-         PronghornStage producer = new InputStageStreamingVisitorExample(gm, GraphManager.getInputPipe(gm, stage, 1));
-                    
-         addMonitorAndTest(gm, " streaming visitor ");
-        
-
-        
+        return checkArgs;
     }
 	
 		
 	@Test
 	public void eventConsumerInputStageTest() {
 								
-	
-		
-		CheckStageArguments checkArgs = new CheckStageArguments() {
-			//	build the expected data that should be found on the byte ring.
-			final byte[] expected = (InputStageEventConsumerExample.testSymbol+InputStageEventConsumerExample.testCompanyName).getBytes();
-			int expectedMsg = from.messageStarts[1];   	    
-			final int[] expectedInts = new int[] {8, 0, 3, 3, 31, 0, 0, 2, 0, 2343, 2, 0, 8000, 2, 0, 2000, 2, 0, 7230, 0, 10000000, 34};
-			//simple stage that reports to the console
-
-			@Override
-			public int expectedMessageIdx() {
-				return expectedMsg;
-			}
-
-			@Override
-			public byte[] expectedBytes() {
-				return expected;
-			}
-
-			@Override
-			public int[] expectedInts() {
-				return expectedInts;
-			}
-			
-		};
+	    CheckStageArguments checkArgs = argumentChecker((InputStageEventConsumerExample.testSymbol+InputStageEventConsumerExample.testCompanyName).getBytes(),
+	            new int[] {8, 0, 3, 3, 31, 0, 0, 2, 0, 2343, 2, 0, 8000, 2, 0, 2000, 2, 0, 7230, 0, 10000000, 34} );
+		 
 		int expectedBytes = InputStageEventConsumerExample.testSymbol.length() + InputStageEventConsumerExample.testCompanyName.length();
 
 		

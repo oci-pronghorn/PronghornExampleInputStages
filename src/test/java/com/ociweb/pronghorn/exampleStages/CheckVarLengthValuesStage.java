@@ -74,52 +74,45 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 
 	private long consumeMessage(int fragSize, RingBuffer inputRing,	int mask, int[] buffer, PaddedLong workingTailPos) {
 		
-		long nextTargetHead = RingBuffer.confirmLowLevelRead(inputRing, fragSize);
+		RingBuffer.confirmLowLevelRead(inputRing, fragSize);
 
-		//Instead of pulling each variable field this pulls them all at once
-		int len = buffer[ (((int)nextTargetHead) - 1) & mask];
-		
-		deepValueTesting(len);
-		RingBuffer.releaseReadLock(inputRing);
-		//releaseReadLock(inputRing);
-		
-		workingTailPos.value = nextTargetHead;
-		
-		RingBuffer.addAndGetBytesWorkingTailPosition(inputRing, len);
-							
-		return len;
+		deepValueTesting();
+
+		//Do after testing so not to move this needed position
+		RingBuffer.addAndGetWorkingTail(inputRing, fragSize-1);//One less do releaseReads can grab the byte length
+		return RingBuffer.releaseReads(inputRing);
 	}
 
-	private void deepValueTesting(int len) {
+	private void deepValueTesting() {
 		//checking the primary ints
 		if (null!=expectedInts) {
 			testExpectedInts();
-		}					
-					            
-		        			            
+		}		    			            
 		if (null!= expectedBytes) {
-			testExpectedBytes(len);
+			testExpectedBytes();
 		}
 	}
 
-	private void testExpectedBytes(int len) {
+	private void testExpectedBytes() {
 		int base = RingBuffer.bytesReadBase(inputRing);
-		int msgId = RingBuffer.takeMsgIdx(inputRing);
+		int msgId = RingBuffer.peekInt(inputRing);//must use non-distructive read
 		if (expectedMessageIdx!=msgId) {
 			messageCountMismatch(msgId);
 		}
-		if (expectedBytes.length!=len) {
-			byteLengthMismatch(len);
-		}
-	    deepByteCheck(len, base, len, inputRing.byteMask, RingBuffer.byteBuffer(inputRing));
+	    deepByteCheck(expectedBytes.length, base, expectedBytes.length, inputRing.byteMask, RingBuffer.byteBuffer(inputRing));
 	}
 
 	private void deepByteCheck(int len, int base, int i, int byteMask, byte[] byteBuffer) {
-		while (--i>=0) {
+		int errIdx = -1;
+	    while (--i>=0) {
 			if (expectedBytes[i] != byteBuffer[((base+i)&byteMask)]) {	
-				showByteError(len, base, i);
+			    errIdx = i;
 			}
-		}
+		}		
+	    if (errIdx>=0) {
+	        showByteError(len, base, errIdx);
+	    }
+	    
 	}
 
 	private void messageCountMismatch(int msgId) {
@@ -137,7 +130,6 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 	private void testExpectedInts() {
 		long primaryPos = RingBuffer.getWorkingTailPosition(inputRing);
 		int j = fragSize;
-		//int[] expectedInts = new int[fragSize];
 		while (--j>=0) {
 			if (expectedInts[j] != RingBuffer.primaryBuffer(inputRing)[(int)(primaryPos+j)&inputRing.mask]) {
 			    showIntError(primaryPos);
@@ -147,13 +139,9 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 
 	private void showIntError(long primaryPos) {
 		System.err.println("failure after message "+count);
-		System.err.println(Arrays.toString(expectedInts));
-		
-		try {
-		  System.err.println( Arrays.toString(Arrays.copyOfRange(RingBuffer.primaryBuffer(inputRing), (int)primaryPos&inputRing.mask, (int)(primaryPos+fragSize)&inputRing.mask)) );
-		} catch (Throwable t) {
-			 // ignore
-		}
+		System.err.println("EXP:"+Arrays.toString(expectedInts));		
+		System.err.println("ACT:"+Arrays.toString(Arrays.copyOfRange(RingBuffer.primaryBuffer(inputRing), (int)primaryPos&inputRing.mask, (int)(primaryPos+fragSize)&inputRing.mask)) );
+
 		fail("Ints do not match ");
 	}
 
