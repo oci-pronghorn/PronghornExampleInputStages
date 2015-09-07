@@ -1,13 +1,13 @@
 package com.ociweb.pronghorn.exampleStages;
 
-import static com.ociweb.pronghorn.ring.RingBuffer.addByteArray;
-import static com.ociweb.pronghorn.ring.RingBuffer.addMsgIdx;
-import static com.ociweb.pronghorn.ring.RingBuffer.confirmLowLevelWrite;
-import static com.ociweb.pronghorn.ring.RingBuffer.publishWrites;
-import static com.ociweb.pronghorn.ring.RingBuffer.roomToLowLevelWrite;
+import static com.ociweb.pronghorn.pipe.Pipe.addByteArray;
+import static com.ociweb.pronghorn.pipe.Pipe.addMsgIdx;
+import static com.ociweb.pronghorn.pipe.Pipe.confirmLowLevelWrite;
+import static com.ociweb.pronghorn.pipe.Pipe.publishWrites;
+import static com.ociweb.pronghorn.pipe.Pipe.roomToLowLevelWrite;
 
-import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
-import com.ociweb.pronghorn.ring.RingBuffer;
+import com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager;
+import com.ociweb.pronghorn.pipe.Pipe;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 
@@ -17,7 +17,7 @@ import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 public class InputStageLowLevel40ByteBaselineExample extends PronghornStage {
 
 	//all members should be private final unless the reason is documented with a clear comment 
-	private final RingBuffer output;
+	private final Pipe output;
 		
 	private final int msgIdx;
 	private final int sizeOfFragment;
@@ -62,7 +62,7 @@ public class InputStageLowLevel40ByteBaselineExample extends PronghornStage {
 	 * @param graphManager
 	 * @param output
 	 */
-	protected InputStageLowLevel40ByteBaselineExample(GraphManager graphManager, RingBuffer output) {
+	protected InputStageLowLevel40ByteBaselineExample(GraphManager graphManager, Pipe output) {
 		super(graphManager, NONE, output);
 		
 		////////
@@ -71,7 +71,7 @@ public class InputStageLowLevel40ByteBaselineExample extends PronghornStage {
 	
 		this.output = output;
 		
-		FROM = RingBuffer.from(output);
+		FROM = Pipe.from(output);
 		
 		//all the script positions for every message is found in this array
 		//the length of this array should match the count of templates

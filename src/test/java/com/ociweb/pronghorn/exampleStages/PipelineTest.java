@@ -7,10 +7,10 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
-import com.ociweb.pronghorn.ring.RingBuffer;
-import com.ociweb.pronghorn.ring.RingBufferConfig;
-import com.ociweb.pronghorn.ring.schema.loader.TemplateHandler;
+import com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager;
+import com.ociweb.pronghorn.pipe.Pipe;
+import com.ociweb.pronghorn.pipe.PipeConfig;
+import com.ociweb.pronghorn.pipe.schema.loader.TemplateHandler;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.monitor.MonitorConsoleStage;
 import com.ociweb.pronghorn.stage.monitor.MonitorFROM;
@@ -32,8 +32,8 @@ public class PipelineTest {
 	
 	private final Long monitorRate = Long.valueOf(50000000);
 	
-	private static RingBufferConfig ringBufferConfig;
-	private static RingBufferConfig ringBufferMonitorConfig;
+	private static PipeConfig ringBufferConfig;
+	private static PipeConfig ringBufferMonitorConfig;
 
 	@BeforeClass
 	public static void loadSchema() {
@@ -44,8 +44,8 @@ public class PipelineTest {
 		
 		try {
 			from = TemplateHandler.loadFrom("/exampleTemplate.xml");
-			ringBufferConfig = new RingBufferConfig(from, messagesOnRing, maxLengthVarField);
-			ringBufferMonitorConfig = new RingBufferConfig(MonitorFROM.buildFROM(), monitorMessagesOnRing, maxLengthVarField);
+			ringBufferConfig = new PipeConfig(from, messagesOnRing, maxLengthVarField);
+			ringBufferMonitorConfig = new PipeConfig(MonitorFROM.buildFROM(), monitorMessagesOnRing, maxLengthVarField);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -106,7 +106,7 @@ public class PipelineTest {
 		GraphManager.enableBatching(gm);
 
 		
-		RingBuffer ringForByteCount = GraphManager.getInputPipe(gm, GraphManager.findStageByPath(gm, 1, 1), 1);
+		Pipe ringForByteCount = GraphManager.getInputPipe(gm, GraphManager.findStageByPath(gm, 1, 1), 1);
 
 		CheckVarLengthValuesStage[] outputStages = collectAllTheOutputStages(gm);
 		
@@ -126,7 +126,7 @@ public class PipelineTest {
     }
 
 
-	private static PronghornStage buildSplitterTree(CheckStageArguments checkArgs, GraphManager gm, RingBufferConfig config, boolean deepTest) {
+	private static PronghornStage buildSplitterTree(CheckStageArguments checkArgs, GraphManager gm, PipeConfig config, boolean deepTest) {
 		
 //		CheckVarLengthValuesStage dumpStage11 = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);
 //		CheckVarLengthValuesStage dumpStage12 = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);		
@@ -142,7 +142,7 @@ public class PipelineTest {
 //		        ); 	
 		
 		
-		CheckVarLengthValuesStage stage = new CheckVarLengthValuesStage(gm, new RingBuffer(config), checkArgs, deepTest);
+		CheckVarLengthValuesStage stage = new CheckVarLengthValuesStage(gm, new Pipe(config), checkArgs, deepTest);
 		
 
 		return stage;
@@ -152,8 +152,8 @@ public class PipelineTest {
 	@Test
 	public void lowLevelInputStageSimple40Test() {
 							
-		RingBufferConfig config = new RingBufferConfig(FieldReferenceOffsetManager.RAW_BYTES, messagesOnRing, InputStageLowLevel40ByteBaselineExample.payload.length);
-		RingBuffer ringBuffer1 = new RingBuffer(config);
+		PipeConfig config = new PipeConfig(FieldReferenceOffsetManager.RAW_BYTES, messagesOnRing, InputStageLowLevel40ByteBaselineExample.payload.length);
+		Pipe ringBuffer1 = new Pipe(config);
 
 		final byte[] expectedBytes = InputStageLowLevel40ByteBaselineExample.payload;
 		
@@ -190,7 +190,7 @@ public class PipelineTest {
 	@Test
 	public void lowLevel40InputStageTest() {
 								
-		RingBufferConfig config = new RingBufferConfig(FieldReferenceOffsetManager.RAW_BYTES, messagesOnRing, InputStageLowLevel40ByteBaselineExample.payload.length);
+		PipeConfig config = new PipeConfig(FieldReferenceOffsetManager.RAW_BYTES, messagesOnRing, InputStageLowLevel40ByteBaselineExample.payload.length);
 	
 		final byte[] expectedBytes = InputStageLowLevel40ByteBaselineExample.payload;
 		
@@ -312,12 +312,12 @@ public class PipelineTest {
 		
 	}
 	
-    private long timeAndRunTest(RingBuffer ringBuffer, GraphManager gm,
+    private long timeAndRunTest(Pipe ringBuffer, GraphManager gm,
             String label, long testInSeconds, CheckVarLengthValuesStage ... countStages) {
         return timeAndRunTestByArray(ringBuffer,gm, label, testInSeconds, countStages);
     }
     
-	private long timeAndRunTestByArray(RingBuffer ringBuffer, GraphManager gm,
+	private long timeAndRunTestByArray(Pipe ringBuffer, GraphManager gm,
 			String label, long testInSeconds, CheckVarLengthValuesStage[] countStages) {
 		StageScheduler scheduler = new ThreadPerStageScheduler(GraphManager.cloneAll(gm));
 		 
@@ -349,7 +349,7 @@ public class PipelineTest {
 		}
 		
 		if ((duration>0) && (messages>0)) {
-			long bytesMoved = (4l*RingBuffer.headPosition(ringBuffer))+bytes;
+			long bytesMoved = (4l*Pipe.headPosition(ringBuffer))+bytes;
 			
 			
 			float mbMoved = (8f*bytesMoved)/(float)(1<<20);

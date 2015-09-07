@@ -1,25 +1,25 @@
 package com.ociweb.pronghorn.exampleStages;
 
-import static com.ociweb.pronghorn.ring.FieldReferenceOffsetManager.lookupFieldLocator;
-import static com.ociweb.pronghorn.ring.FieldReferenceOffsetManager.lookupTemplateLocator;
-import static com.ociweb.pronghorn.ring.RingWriter.publishWrites;
-import static com.ociweb.pronghorn.ring.RingWriter.tryWriteFragment;
-import static com.ociweb.pronghorn.ring.RingWriter.writeASCII;
-import static com.ociweb.pronghorn.ring.RingWriter.writeDecimal;
-import static com.ociweb.pronghorn.ring.RingWriter.writeLong;
-import static com.ociweb.pronghorn.ring.RingWriter.writeUTF8;
+import static com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager.lookupFieldLocator;
+import static com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager.lookupTemplateLocator;
+import static com.ociweb.pronghorn.pipe.PipeWriter.publishWrites;
+import static com.ociweb.pronghorn.pipe.PipeWriter.tryWriteFragment;
+import static com.ociweb.pronghorn.pipe.PipeWriter.writeASCII;
+import static com.ociweb.pronghorn.pipe.PipeWriter.writeDecimal;
+import static com.ociweb.pronghorn.pipe.PipeWriter.writeLong;
+import static com.ociweb.pronghorn.pipe.PipeWriter.writeUTF8;
 
 import java.util.Arrays;
 
-import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
-import com.ociweb.pronghorn.ring.RingBuffer;
-import com.ociweb.pronghorn.ring.RingWriter;
+import com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager;
+import com.ociweb.pronghorn.pipe.Pipe;
+import com.ociweb.pronghorn.pipe.PipeWriter;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 
 public class InputStageHighLevelExample extends PronghornStage {
 
-	private final RingBuffer output;
+	private final Pipe output;
 	private final FieldReferenceOffsetManager FROM; //Acronym so this is in all caps (this holds the schema)
 	
 	private final int MSG_DAILY_QUOTE;
@@ -39,7 +39,7 @@ public class InputStageHighLevelExample extends PronghornStage {
 	public static final String testSymbol = "IBM";
 	public static final String testCompanyName = "International Business Machines";
 	
-	protected InputStageHighLevelExample(GraphManager graphManager, RingBuffer output) {
+	protected InputStageHighLevelExample(GraphManager graphManager, Pipe output) {
 		super(graphManager, NONE, output);
 		
 		////////
@@ -47,7 +47,7 @@ public class InputStageHighLevelExample extends PronghornStage {
 		////////
 	
 		this.output = output;
-		FROM = RingBuffer.from(output);
+		FROM = Pipe.from(output);
 		
 		this.dailyMessageIdx = FROM.messageStarts[1];
 		

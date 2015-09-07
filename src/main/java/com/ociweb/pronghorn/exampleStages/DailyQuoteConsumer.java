@@ -1,7 +1,7 @@
 package com.ociweb.pronghorn.exampleStages;
 
-import com.ociweb.pronghorn.ring.proxy.ProngTemplateField;
-import com.ociweb.pronghorn.ring.proxy.ProngTemplateMessage;
+import com.ociweb.pronghorn.pipe.proxy.ProngTemplateField;
+import com.ociweb.pronghorn.pipe.proxy.ProngTemplateMessage;
 
 @ProngTemplateMessage(templateId=10000)
 public interface DailyQuoteConsumer {

@@ -1,16 +1,16 @@
 package com.ociweb.pronghorn.exampleStages;
 
-import static com.ociweb.pronghorn.ring.RingBuffer.*;
+import static com.ociweb.pronghorn.pipe.Pipe.*;
 
-import com.ociweb.pronghorn.ring.FieldReferenceOffsetManager;
-import com.ociweb.pronghorn.ring.RingBuffer;
+import com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager;
+import com.ociweb.pronghorn.pipe.Pipe;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 
 public class InputStageLowLevelExample extends PronghornStage {
 
 	//all members should be private final unless the reason is documented with a clear comment 
-	private final RingBuffer output;
+	private final Pipe output;
 		
 	private final int msgIdx;
 	private final int sizeOfFragment;
@@ -52,7 +52,7 @@ public class InputStageLowLevelExample extends PronghornStage {
 	 * @param graphManager
 	 * @param output
 	 */
-	protected InputStageLowLevelExample(GraphManager graphManager, RingBuffer output) {
+	protected InputStageLowLevelExample(GraphManager graphManager, Pipe output) {
 		super(graphManager, NONE, output);
 		
 		////////
@@ -61,7 +61,7 @@ public class InputStageLowLevelExample extends PronghornStage {
 	
 		this.output = output;
 		
-		FROM = RingBuffer.from(output);
+		FROM = Pipe.from(output);
 		
 		//all the script positions for every message is found in this array
 		//the length of this array should match the count of templates
@@ -174,7 +174,7 @@ public class InputStageLowLevelExample extends PronghornStage {
 	}
 
 
-    private void writeMessage(RingBuffer output) {
+    private void writeMessage(Pipe output) {
         //NOTE: if writing a decimal field it is done with two statements
         //      addIntValue(EXPONENT, output) //this is a value between -64 and +64 for moving the decimal place of the mantissa
         //      addLongValue(MANTISSA,  output) //this is a normal long value holding all the digits of the decimal

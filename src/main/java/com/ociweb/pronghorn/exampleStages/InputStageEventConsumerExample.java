@@ -1,7 +1,7 @@
 package com.ociweb.pronghorn.exampleStages;
 
-import com.ociweb.pronghorn.ring.RingBuffer;
-import com.ociweb.pronghorn.ring.proxy.EventConsumer;
+import com.ociweb.pronghorn.pipe.Pipe;
+import com.ociweb.pronghorn.pipe.proxy.EventConsumer;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 
@@ -18,7 +18,7 @@ public class InputStageEventConsumerExample extends PronghornStage {
     public static final long   testVolume = 10000000;	
 	
 	
-	protected InputStageEventConsumerExample(GraphManager graphManager, RingBuffer output) {
+	protected InputStageEventConsumerExample(GraphManager graphManager, Pipe output) {
 		super(graphManager, NONE, output);		
 		consumer = new EventConsumer(output);
 	}
