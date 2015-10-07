@@ -50,7 +50,7 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 	
 	@Override
 	public void run() {
-				if (Pipe.contentToLowLevelRead(inputRing,fragSize)) {
+				if (Pipe.hasContentToRead((Pipe<S>) inputRing, fragSize)) {
 					consumeMessages(inputRing);
 				}
 
@@ -66,7 +66,7 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 		do {
 			b += consumeMessage(fragSize, inputRing, mask, buffer, workingTailPos);
 			c++;					
-		} while (Pipe.contentToLowLevelRead(inputRing,fragSize));	
+		} while (Pipe.hasContentToRead((Pipe<S>) inputRing, fragSize));	
 
 		count += c;
 		bytes += b;
