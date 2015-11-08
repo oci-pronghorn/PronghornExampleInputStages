@@ -8,8 +8,10 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager;
+import com.ociweb.pronghorn.pipe.MessageSchemaDynamic;
 import com.ociweb.pronghorn.pipe.Pipe;
 import com.ociweb.pronghorn.pipe.PipeConfig;
+import com.ociweb.pronghorn.pipe.RawDataSchema;
 import com.ociweb.pronghorn.pipe.schema.loader.TemplateHandler;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.monitor.MonitorConsoleStage;
@@ -44,8 +46,8 @@ public class PipelineTest {
 		
 		try {
 			from = TemplateHandler.loadFrom("/exampleTemplate.xml");
-			ringBufferConfig = new PipeConfig(from, messagesOnRing, maxLengthVarField);
-			ringBufferMonitorConfig = new PipeConfig(PipeMonitorSchema.FROM, monitorMessagesOnRing, maxLengthVarField);
+			ringBufferConfig = new PipeConfig(new MessageSchemaDynamic(from), messagesOnRing, maxLengthVarField);
+			ringBufferMonitorConfig = new PipeConfig(PipeMonitorSchema.instance, monitorMessagesOnRing, maxLengthVarField);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -152,7 +154,7 @@ public class PipelineTest {
 	@Test
 	public void lowLevelInputStageSimple40Test() {
 							
-		PipeConfig config = new PipeConfig(FieldReferenceOffsetManager.RAW_BYTES, messagesOnRing, InputStageLowLevel40ByteBaselineExample.payload.length);
+		PipeConfig config = new PipeConfig(RawDataSchema.instance, messagesOnRing, InputStageLowLevel40ByteBaselineExample.payload.length);
 		Pipe ringBuffer1 = new Pipe(config);
 
 		final byte[] expectedBytes = InputStageLowLevel40ByteBaselineExample.payload;
@@ -190,7 +192,7 @@ public class PipelineTest {
 	@Test
 	public void lowLevel40InputStageTest() {
 								
-		PipeConfig config = new PipeConfig(FieldReferenceOffsetManager.RAW_BYTES, messagesOnRing, InputStageLowLevel40ByteBaselineExample.payload.length);
+		PipeConfig config = new PipeConfig(RawDataSchema.instance, messagesOnRing, InputStageLowLevel40ByteBaselineExample.payload.length);
 	
 		final byte[] expectedBytes = InputStageLowLevel40ByteBaselineExample.payload;
 		
