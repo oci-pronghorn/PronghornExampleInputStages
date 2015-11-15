@@ -8,6 +8,7 @@ import static com.ociweb.pronghorn.pipe.Pipe.roomToLowLevelWrite;
 
 import com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.pipe.Pipe;
+import com.ociweb.pronghorn.pipe.RawDataSchema;
 import com.ociweb.pronghorn.stage.PronghornStage;
 import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 
@@ -96,7 +97,7 @@ public class InputStageLowLevel40ByteBaselineExample extends PronghornStage {
 		//if not we should throw now to stop the construction early
 		///////////
 		
-		if (from!=FieldReferenceOffsetManager.RAW_BYTES) {
+		if (from!=RawDataSchema.FROM) {
 			throw new UnsupportedOperationException();
 		}
 	}
