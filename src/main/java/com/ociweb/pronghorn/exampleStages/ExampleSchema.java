@@ -15,22 +15,22 @@ public class ExampleSchema extends MessageSchema {
     
     public static final ExampleSchema instance = new ExampleSchema();
     
-    public static final int MSG_MQTTMSG_100 = 0x0;
-    public static final int MSG_MQTTMSG_100_FIELD_SERVERURI_110 = 0x4000001;
-    public static final int MSG_MQTTMSG_100_FIELD_CLIENTID_111 = 0x4000003;
-    public static final int MSG_MQTTMSG_100_FIELD_INDEX_112 = 0x1000005;
-    public static final int MSG_MQTTMSG_100_FIELD_TOPIC_120 = 0x4000006;
-    public static final int MSG_MQTTMSG_100_FIELD_PAYLOAD_121 = 0x7000008;
-    public static final int MSG_MQTTMSG_100_FIELD_QOS_122 = 0xa;
-    public static final int MSG_DAILYQUOTEMSG_10000 = 0x8;
-    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_SYMBOL_4 = 0x4000001;
-    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_COMPANY_NAME_84 = 0x4000003;
-    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_OPTIONAL_ADDITIONAL_I18N_NOTE_103 = 0x5800005;
-    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_OPEN_PRICE_118 = 0x6000007;
-    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_HIGH_PRICE_134 = 0x600000a;
-    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_LOW_PRICE_150 = 0x600000d;
-    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_CLOSED_PRICE_166 = 0x6000010;
-    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_VOLUME_178 = 0x2000013;
+    public static final int MSG_MQTTMSG_100 = 0x00000000;
+    public static final int MSG_MQTTMSG_100_FIELD_SERVERURI_110 = 0x01000001;
+    public static final int MSG_MQTTMSG_100_FIELD_CLIENTID_111 = 0x01000003;
+    public static final int MSG_MQTTMSG_100_FIELD_INDEX_112 = 0x00400005;
+    public static final int MSG_MQTTMSG_100_FIELD_TOPIC_120 = 0x01000006;
+    public static final int MSG_MQTTMSG_100_FIELD_PAYLOAD_121 = 0x01C00008;
+    public static final int MSG_MQTTMSG_100_FIELD_QOS_122 = 0x0000000A;
+    public static final int MSG_DAILYQUOTEMSG_10000 = 0x00000008;
+    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_SYMBOL_4 = 0x01000001;
+    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_COMPANY_NAME_84 = 0x01000003;
+    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_OPTIONAL_ADDITIONAL_I18N_NOTE_103 = 0x01600005;
+    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_OPEN_PRICE_118 = 0x01800007;
+    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_HIGH_PRICE_134 = 0x0180000A;
+    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_LOW_PRICE_150 = 0x0180000D;
+    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_CLOSED_PRICE_166 = 0x01800010;
+    public static final int MSG_DAILYQUOTEMSG_10000_FIELD_VOLUME_178 = 0x00800013;
     
     protected ExampleSchema() {
         super(FROM);
