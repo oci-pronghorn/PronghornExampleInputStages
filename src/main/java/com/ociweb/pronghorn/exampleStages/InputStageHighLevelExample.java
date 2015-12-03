@@ -19,7 +19,7 @@ import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 
 public class InputStageHighLevelExample extends PronghornStage {
 
-	private final Pipe output;
+	private final Pipe<ExampleSchema> output;
 	private final FieldReferenceOffsetManager FROM; //Acronym so this is in all caps (this holds the schema)
 	
 	private final int MSG_DAILY_QUOTE;
@@ -39,7 +39,7 @@ public class InputStageHighLevelExample extends PronghornStage {
 	public static final String testSymbol = "IBM";
 	public static final String testCompanyName = "International Business Machines";
 	
-	protected InputStageHighLevelExample(GraphManager graphManager, Pipe output) {
+	protected InputStageHighLevelExample(GraphManager graphManager, Pipe<ExampleSchema> output) {
 		super(graphManager, NONE, output);
 		
 		////////

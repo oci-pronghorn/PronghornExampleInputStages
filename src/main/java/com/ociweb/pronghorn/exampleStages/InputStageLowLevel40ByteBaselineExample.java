@@ -18,7 +18,7 @@ import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 public class InputStageLowLevel40ByteBaselineExample extends PronghornStage {
 
 	//all members should be private final unless the reason is documented with a clear comment 
-	private final Pipe output;
+	private final Pipe<ExampleSchema> output;
 		
 	private final int msgIdx;
 	private final int sizeOfFragment;
@@ -63,7 +63,7 @@ public class InputStageLowLevel40ByteBaselineExample extends PronghornStage {
 	 * @param graphManager
 	 * @param output
 	 */
-	protected InputStageLowLevel40ByteBaselineExample(GraphManager graphManager, Pipe output) {
+	protected InputStageLowLevel40ByteBaselineExample(GraphManager graphManager, Pipe<ExampleSchema> output) {
 		super(graphManager, NONE, output);
 		
 		////////

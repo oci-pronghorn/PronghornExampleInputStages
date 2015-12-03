@@ -18,7 +18,7 @@ public class InputStageEventConsumerExample extends PronghornStage {
     public static final long   testVolume = 10000000;	
 	
 	
-	protected InputStageEventConsumerExample(GraphManager graphManager, Pipe output) {
+	protected InputStageEventConsumerExample(GraphManager graphManager, Pipe<ExampleSchema> output) {
 		super(graphManager, NONE, output);		
 		consumer = new EventConsumer(output);
 	}

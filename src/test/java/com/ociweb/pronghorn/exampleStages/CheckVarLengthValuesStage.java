@@ -18,24 +18,19 @@ public final class CheckVarLengthValuesStage extends PronghornStage {
 	private final int expectedMessageIdx;
 	private final byte[] expectedBytes;
 	private final int[] expectedInts;
-	private final FieldReferenceOffsetManager from;
 	private final int fragSize;
 
 	private volatile long count;
 	private volatile long bytes;
-	
-	private final boolean testData;
-	
+		
 
 	public CheckVarLengthValuesStage(GraphManager gm, Pipe inputRing, CheckStageArguments args, boolean testData) {
 		super(gm, inputRing, NONE);
-		this.testData = testData;
 		this.inputRing = inputRing;
 		this.expectedMessageIdx = args.expectedMessageIdx();
 		this.expectedBytes = testData ? args.expectedBytes() : null;
 		this.expectedInts = testData ? args.expectedInts() :  null;
-		this.from = Pipe.from(inputRing);
-		this.fragSize = from.fragDataSize[expectedMessageIdx];
+		this.fragSize = Pipe.sizeOf(inputRing, expectedMessageIdx);
 		
 	}
 

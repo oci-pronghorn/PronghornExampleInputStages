@@ -138,7 +138,7 @@ public class InputStageStreamingVisitorExample extends PronghornStage {
 	private final StreamingVisitorWriter writer;
 	
 	
-	protected InputStageStreamingVisitorExample(GraphManager graphManager, Pipe output) {
+	protected InputStageStreamingVisitorExample(GraphManager graphManager, Pipe<ExampleSchema> output) {
         super(graphManager, NONE, output);
 
 
