@@ -127,7 +127,7 @@ public class InputStageLowLevelExample extends PronghornStage {
 		//unless this source only produces one kind of message 
 		///////
 	    int count = 100;//only do this many at a time to allow for shutdown
-		while (--count>=0 && roomToLowLevelWrite(output, sizeOfFragment) ) {
+		while (--count>=0 && hasRoomForWrite(output, sizeOfFragment) ) {
 
 			//////
 			//gather all the data to be written
